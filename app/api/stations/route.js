@@ -1,64 +1,96 @@
 export async function GET() {
 
-  const feeds = [
-    "https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs-ace",
-    "https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs-bdfm",
-    "https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs-g",
-    "https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs-jz",
-    "https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs-nqrw",
-    "https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs-l",
-    "https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs",
-    "https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs-si"
-  ];
+const stations = [
+{
+name:"Times Sq-42 St",
+borough:"M",
+line:"Broadway",
+cleanliness:8,
+reliability:9,
+crowding:10,
+accessibility:7,
+transfers:10,
+elevator:"operational",
+delayScore:6
+},
+{
+name:"8 St-NYU",
+borough:"M",
+line:"Broadway",
+cleanliness:8,
+reliability:10,
+crowding:8,
+accessibility:7,
+transfers:7,
+elevator:"operational",
+delayScore:8
+},
+{
+name:"Clark St",
+borough:"Bk",
+line:"Clark St",
+cleanliness:7,
+reliability:10,
+crowding:3,
+accessibility:5,
+transfers:2,
+elevator:"operational",
+delayScore:9
+},
+{
+name:"Grand Central",
+borough:"M",
+line:"Lexington",
+cleanliness:7,
+reliability:9,
+crowding:10,
+accessibility:10,
+transfers:10,
+elevator:"operational",
+delayScore:7
+},
+{
+name:"Nereid Av",
+borough:"Bx",
+line:"White Plains Rd",
+cleanliness:8,
+reliability:10,
+crowding:2,
+accessibility:6,
+transfers:2,
+elevator:"operational",
+delayScore:10
+}
+];
 
-  const stations = [
-    "Times Sq-42 St",
-    "Clark St",
-    "Nereid Av",
-    "191 St",
-    "238 St"
-  ];
+const scoredStations = stations.map(station=>{
 
-  const scoredStations = stations.map(station => {
+const crowdScore = 11-station.crowding;
 
-    const cleanliness = Math.floor(Math.random()*4)+6;
-    const reliability = 10;
-    const crowding = Math.floor(Math.random()*10)+1;
-    const accessibility = Math.floor(Math.random()*10)+1;
-    const transfers = Math.floor(Math.random()*10)+1;
+const total =
+station.cleanliness +
+(station.reliability*2) +
+crowdScore +
+station.accessibility +
+station.transfers +
+station.delayScore;
 
-    const delayScore = 10;
-    const crowdScore = 11-crowding;
+const score=Math.round((total/60)*100);
 
-    const total =
-      cleanliness +
-      (reliability*2) +
-      crowdScore +
-      accessibility +
-      transfers +
-      delayScore;
+return{
+...station,
+score,
+updated:new Date().toLocaleString()
+};
 
-    const score = Math.round((total/60)*100);
+});
 
-    return {
-      station,
-      score,
-      cleanliness,
-      reliability,
-      crowding,
-      accessibility,
-      transfers,
-      delayScore,
-      live:true,
-      updated:new Date().toISOString()
-    };
-  });
+scoredStations.sort((a,b)=>b.score-a.score);
 
-  return Response.json({
-    success:true,
-    feedsLoaded:feeds.length,
-    stations:scoredStations,
-    updated:new Date().toISOString()
-  });
+return Response.json({
+success:true,
+stationsFound:scoredStations.length,
+stations:scoredStations
+});
 
 }
