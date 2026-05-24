@@ -1,56 +1,52 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
-export default function Home() {
-  const [stations, setStations] = useState([]);
+export default async function Home() {
+  const { data: stations, error } = await supabase
+    .from("stations")
+    .select("*")
+    .limit(50);
 
-  useEffect(() => {
-    async function loadStations() {
+  return (
+    <main
+      style={{
+        padding: "30px",
+        background: "#111",
+        color: "white",
+        minHeight: "100vh",
+      }}
+    >
+      <h1>🚇 MTA Station Index</h1>
 
-      const { data, error } = await supabase
-        .from("stations")
-        .select("*");
+      <p>{stations?.length || 0} stations found</p>
 
-      console.log("DATA:", data);
-      console.log("ERROR:", error);
+      {error && (
+        <pre>{JSON.stringify(error, null, 2)}</pre>
+      )}
 
-      if (data) {
-        setStations(data);
-      }
-    }
+      {stations?.map((station) => (
+        <div
+          key={station.id}
+          style={{
+            border: "1px solid #444",
+            padding: "12px",
+            marginTop: "10px",
+            borderRadius: "10px",
+          }}
+        >
+          <h3>
+            {station["Stop Name"] || "Unknown Station"}
+          </h3>
 
-    loadStations();
-  }, []);
-
-  return (
-    <main
-      style={{
-        background:"#111",
-        color:"white",
-        minHeight:"100vh",
-        padding:"30px"
-      }}
-    >
-      <h1>🚇 MTA Station Index</h1>
-
-      <p>{stations.length} stations found</p>
-
-      <pre
-        style={{
-          whiteSpace:"pre-wrap",
-          overflow:"auto"
-        }}
-      >
-        {JSON.stringify(stations[0], null, 2)}
-      </pre>
-
-    </main>
-  );
+          <p>Line: {station.Line}</p>
+          <p>Borough: {station.Borough}</p>
+          <p>Division: {station.Division}</p>
+        </div>
+      ))}
+    </main>
+  );
 }
