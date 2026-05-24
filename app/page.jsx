@@ -36,7 +36,7 @@ export default async function Home() {
       >
         <h2>Station Rankings</h2>
 
-        {stations.map((station, index) => (
+        {stations.map((station,index) => (
           <div
             key={station.id}
             style={{
@@ -52,10 +52,6 @@ export default async function Home() {
 
             <p>Borough: {station.Borough}</p>
 
-            <p>
-              ADA Access:{" "}
-              {station.ADA === 1 ? "♿ Accessible" : "Not Accessible"}
-            </p>
           </div>
         ))}
       </div>
