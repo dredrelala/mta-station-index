@@ -9,6 +9,7 @@ const supabase = createClient(
 );
 
 export default function Home() {
+
  const [stations,setStations]=useState([]);
 
  useEffect(()=>{
@@ -26,17 +27,17 @@ export default function Home() {
       ((station.name.length%5)+6);
 
       const reliability=
-      station.ridership
-      ? Math.min(10,Math.floor(station.ridership/50000))
+      station.delay_score
+      ? 11-station.delay_score
       : 5;
 
       const busyness=
-      station.ridership
-      ? Math.min(10,Math.floor(station.ridership/60000))
-      : 5;
+      station.crowd_score || 5;
 
       const accessibility=
-      station.accessible ? 10 : 6;
+      station.elevator_status==="operational"
+      ? 10
+      : 5;
 
       const transfers=
       station.line
@@ -84,7 +85,7 @@ export default function Home() {
  fontFamily:"Arial"
  }}>
 
- <h1>🚇 MTA Station Index V6</h1>
+ <h1>🚇 MTA Station Index V7</h1>
 
  <p>{stations.length} stations found</p>
 
@@ -104,16 +105,22 @@ export default function Home() {
  <h2>#{index+1} {station.name}</h2>
 
  <p>🚇 {station.line}</p>
-
  <p>📍 {station.borough}</p>
 
  <h2>⭐ {station.score}/100</h2>
 
  <p>🧼 {station.cleanliness}/10</p>
- <p>⏱ {station.reliability}/10</p>
- <p>👥 {station.busyness}/10</p>
- <p>♿ {station.accessibility}/10</p>
- <p>🔄 {station.transfers}/10</p>
+ <p>⏱ Reliability: {station.reliability}/10</p>
+ <p>👥 Crowding: {station.busyness}/10</p>
+ <p>♿ Accessibility: {station.accessibility}/10</p>
+ <p>🔄 Transfers: {station.transfers}/10</p>
+
+ <hr />
+
+ <p>🚨 Delay Score: {station.delay_score || "Unknown"}/10</p>
+ <p>👥 Crowd Score: {station.crowd_score || "Unknown"}/10</p>
+ <p>🛗 Elevator: {station.elevator_status || "Unknown"}</p>
+ <p>🕒 Updated: {station.last_updated ? new Date(station.last_updated).toLocaleString() : "Unknown"}</p>
 
  </div>
 
