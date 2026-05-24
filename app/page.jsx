@@ -4,105 +4,142 @@ import { useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
 export default function Home() {
-  const [stations, setStations] = useState([]);
+  const [stations, setStations] = useState([]);
 
-  useEffect(() => {
-    async function loadStations() {
-      const { data } = await supabase
-        .from("stations")
-        .select("*");
+  useEffect(() => {
+    async function loadStations() {
 
-      const ranked = (data || []).map((station) => {
+      const { data, error } = await supabase
+        .from("stations")
+        .select("*");
 
-        const cleanliness = Math.floor(Math.random()*4)+6;
-        const reliability = Math.floor(Math.random()*4)+6;
-        const busyness = Math.floor(Math.random()*10)+1;
-        const accessibility = station.division==="IRT" ? 9 : 7;
-        const transfers = station.line
-          ? station.line.split("-").length+3
-          : 3;
+      if (error) {
+        console.log(error);
+        return;
+      }
 
-        const score = Math.round(
-          (
-            cleanliness*.30 +
-            reliability*.25 +
-            (10-busyness)*.20 +
-            accessibility*.15 +
-            transfers*.10
-          )*10
-        );
+      const ranked = (data || []).map((station) => {
 
-        return {
-          ...station,
-          score,
-          cleanliness,
-          reliability,
-          busyness,
-          accessibility,
-          transfers
-        };
-      });
+        // Uses database values if they exist
+        // otherwise defaults
 
-      ranked.sort((a,b)=>b.score-a.score);
+        const cleanliness =
+          station.cleanliness ?? 7;
 
-      setStations(ranked);
-    }
+        const reliability =
+          station.reliability ?? 7;
 
-    loadStations();
-  }, []);
+        const busyness =
+          station.busyness ?? 5;
 
-  return (
-    <main
-      style={{
-        background:"#111",
-        minHeight:"100vh",
-        color:"white",
-        padding:"40px",
-        fontFamily:"Arial"
-      }}
-    >
-      <h1>🚇 MTA Station Index V3! </h1>
+        const accessibility =
+          station.accessibility ??
+          (station.division==="IRT" ? 9 : 7);
 
-      <p>{stations.length} stations found</p>
+        const transfers =
+          station.line
+            ? station.line.split("-").length + 3
+            : 3;
 
-      {stations.map((station,index)=>(
+        const score = Math.round(
+          (
+            cleanliness * .30 +
+            reliability * .25 +
+            (10-busyness) * .20 +
+            accessibility * .15 +
+            transfers * .10
+          ) * 10
+        );
 
-        <div
-          key={index}
-          style={{
-            padding:"30px",
-            marginBottom:"20px",
-            border:"1px solid #333",
-            borderRadius:"20px",
-            background:"#1b1b1b"
-          }}
-        >
+        return {
+          ...station,
+          score,
+          cleanliness,
+          reliability,
+          busyness,
+          accessibility,
+          transfers
+        };
+      });
 
-          <h2>
-            #{index+1} {station.name}
-          </h2>
+      ranked.sort(
+        (a,b)=>b.score-a.score
+      );
 
-          <p>🚇 {station.line}</p>
-          <p>📍 {station.borough}</p>
+      setStations(ranked);
+    }
 
-          <h2>
-            ⭐ {station.score}/100
-          </h2>
+    loadStations();
 
-          <p>🧼 {station.cleanliness}/10</p>
-          <p>⏱ {station.reliability}/10</p>
-          <p>👥 {station.busyness}/10</p>
-          <p>♿ {station.accessibility}/10</p>
-          <p>🔄 {station.transfers}/10</p>
+  }, []);
 
-        </div>
+  return (
+    <main
+      style={{
+        background:"#111",
+        minHeight:"100vh",
+        color:"white",
+        padding:"40px",
+        fontFamily:"Arial"
+      }}
+    >
+      <h1>🚇 MTA Station Index V3</h1>
 
-      ))}
-    </main>
-  );
+      <p>
+        {stations.length} stations found
+      </p>
+
+      {stations.map((station,index)=>(
+
+        <div
+          key={station.id || index}
+          style={{
+            padding:"30px",
+            marginBottom:"20px",
+            border:"1px solid #333",
+            borderRadius:"20px",
+            background:"#1b1b1b"
+          }}
+        >
+
+          <h2>
+            #{index+1} {station.name}
+          </h2>
+
+          <p>🚇 {station.line}</p>
+          <p>📍 {station.borough}</p>
+
+          <h2>
+            ⭐ {station.score}/100
+          </h2>
+
+          <p>🧼 {station.cleanliness}/10</p>
+          <p>⏱ {station.reliability}/10</p>
+          <p>👥 {station.busyness}/10</p>
+          <p>♿ {station.accessibility}/10</p>
+          <p>🔄 {station.transfers}/10</p>
+
+          <p style={{
+            color:"#888",
+            fontSize:"12px"
+          }}>
+            Updated: {
+              station.updated_at
+              ? new Date(
+                  station.updated_at
+                ).toLocaleString()
+              : "Unknown"
+            }
+          </p>
+
+        </div>
+
+      ))}
+    </main>
+  );
 }
