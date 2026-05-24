@@ -44,14 +44,14 @@ export default async function Home() {
               borderBottom: "1px solid #333"
             }}
           >
-            <h3>
-              #{index + 1} {station["Stop Name"]}
-            </h3>
+          <h3>
+  #{index + 1} {station.name}
+</h3>
 
-            <p>Line: {station["Line"]}</p>
+<p>Line: {station.line}</p>
 
-            <p>Borough: {station["Borough"]}</p>
-
+<p>Borough: {station.borough}</p> 
+            
             <p>Division: {station["Division"]}</p>
           </div>
         ))}
