@@ -66,7 +66,7 @@ export default function Home() {
         fontFamily:"Arial"
       }}
     >
-      <h1>🚇 MTA Station Index</h1>
+      <h1>🚇 MTA Station Index V3! </h1>
 
       <p>{stations.length} stations found</p>
 
