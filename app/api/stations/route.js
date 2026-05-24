@@ -63,24 +63,33 @@ delayScore:10
 }
 ];
 
-const scoredStations = stations.map(station=>{
+const scoredStations = stations.map((station)=>{
 
-const crowdScore = 11-station.crowding;
+const crowdScore = 11 - station.crowding;
 
 const total =
 station.cleanliness +
-(station.reliability*2) +
+(station.reliability * 2) +
 crowdScore +
 station.accessibility +
 station.transfers +
 station.delayScore;
 
-const score=Math.round((total/60)*100);
+const score = Math.round((total/60)*100);
 
-return{
-...station,
-score,
-updated:new Date().toLocaleString()
+return {
+name: station.name,
+borough: station.borough,
+line: station.line,
+score: score,
+cleanliness: station.cleanliness,
+reliability: station.reliability,
+crowding: station.crowding,
+accessibility: station.accessibility,
+transfers: station.transfers,
+delayScore: station.delayScore,
+elevator: station.elevator,
+updated: new Date().toLocaleString()
 };
 
 });
