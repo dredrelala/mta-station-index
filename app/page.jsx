@@ -60,6 +60,11 @@ export default function Home() {
           <p><strong>Borough:</strong> {station.borough}</p>
 
           <p><strong>Division:</strong> {station.division}</p>
+
+          <p>
+            <strong>Score:</strong>{" "}
+            {station.overall_score ?? 0}
+          </p>
         </div>
       ))}
     </main>
