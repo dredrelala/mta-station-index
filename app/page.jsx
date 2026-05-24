@@ -16,7 +16,7 @@ export default function Home() {
       const { data, error } = await supabase
         .from("stations")
         .select("*")
-        .order("name");
+        .order("name", { ascending: true });
 
       if (error) {
         console.error(error);
@@ -32,45 +32,40 @@ export default function Home() {
   return (
     <main
       style={{
-        background:"#111",
-        color:"white",
-        minHeight:"100vh",
-        padding:"30px"
+        background: "#111",
+        color: "white",
+        minHeight: "100vh",
+        padding: "30px",
+        fontFamily: "Arial"
       }}
     >
       <h1>🚇 MTA Station Index</h1>
 
       <p>{stations.length} stations found</p>
 
-      {stations.map((station,index) => (
+      {stations.map((station, index) => (
         <div
           key={station.id || index}
           style={{
-            borderBottom:"1px solid #444",
-            padding:"20px 0"
+            borderBottom: "1px solid #444",
+            padding: "20px 0"
           }}
         >
-          <h2>#{index + 1} {station.name}</h2>
+          <h2>
+            #{index + 1} {station.name}
+          </h2>
 
           <p>Line: {station.line}</p>
-
           <p>Borough: {station.borough}</p>
-
           <p>Division: {station.division}</p>
 
-          <p>Overall Score: {station.score}</p>
-
-          <p>Safety: {station.safety_score || 5}/10</p>
-
-          <p>Reliability: {station.reliability_score || 5}/10</p>
-
-          <p>Cleanliness: {station.cleanliness_score || 5}/10</p>
-
-          <p>Busyness: {station.busyness_score || 5}/10</p>
-
-          <p>Accessibility: {station.accessibility_score || 5}/10</p>
-
-          <p>Transfers: {station.transfer_score || 5}/10</p>
+          <p><strong>Overall Score:</strong> {station.score}</p>
+          <p><strong>Safety:</strong> {station.safety_score ?? 5}/10</p>
+          <p><strong>Reliability:</strong> {station.reliability_score ?? 5}/10</p>
+          <p><strong>Cleanliness:</strong> {station.cleanliness_score ?? 5}/10</p>
+          <p><strong>Busyness:</strong> {station.busyness_score ?? 5}/10</p>
+          <p><strong>Accessibility:</strong> {station.accessibility_score ?? 5}/10</p>
+          <p><strong>Transfers:</strong> {station.transfer_score ?? 5}/10</p>
         </div>
       ))}
     </main>
