@@ -1,25 +1,28 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 
-export default async function Home() {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-  );
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
 
-  let stations = [];
+export default function Home() {
+  const [stations, setStations] = useState([]);
 
-  try {
-    const { data, error } = await supabase
-      .from("stations")
-      .select("*")
-      .limit(20);
+  useEffect(() => {
+    async function loadStations() {
+      const { data } = await supabase
+        .from("stations")
+        .select("*")
+        .limit(20);
 
-    if (!error && data) {
-      stations = data;
+      setStations(data || []);
     }
-  } catch (e) {
-    console.log(e);
-  }
+
+    loadStations();
+  }, []);
 
   return (
     <main
