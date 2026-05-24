@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
@@ -5,49 +8,61 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
-export default async function Home() {
-  const { data, error } = await supabase
-    .from("stations")
-    .select("*")
-    .limit(20);
+export default function Home() {
+  const [stations, setStations] = useState([]);
 
-  const stations = data || [];
+  useEffect(() => {
+    async function loadStations() {
+      const { data, error } = await supabase
+        .from("stations")
+        .select("*")
+        .limit(20);
+
+      if (error) {
+        console.log(error);
+      } else {
+        console.log(data);
+        setStations(data || []);
+      }
+    }
+
+    loadStations();
+  }, []);
 
   return (
     <main
       style={{
-        minHeight: "100vh",
-        background: "black",
+        background: "#111",
         color: "white",
-        padding: "40px",
-        fontFamily: "Arial"
+        minHeight: "100vh",
+        padding: "30px"
       }}
     >
       <h1>🚇 MTA Station Index</h1>
 
       <p>{stations.length} stations found</p>
 
-      {error && (
-        <p>
-          Error: {JSON.stringify(error)}
-        </p>
-      )}
-
-      {stations.map((station, index) => (
+      {stations.map((station) => (
         <div
-          key={index}
+          key={station["Station ID"]}
           style={{
-            padding: "15px",
-            borderBottom: "1px solid #333"
+            border:"1px solid gray",
+            padding:"15px",
+            marginBottom:"10px",
+            borderRadius:"8px"
           }}
         >
-          <h3>
-            #{index + 1} {station["Stop Name"]}
-          </h3>
+          <h2>{station["Stop Name"]}</h2>
 
           <p>Line: {station["Line"]}</p>
+
           <p>Borough: {station["Borough"]}</p>
-          <p>Division: {station["Division"]}</p>
+
+          <p>
+            Coordinates:
+            {station["GTFS Latitude"]},
+            {station["GTFS Longitude"]}
+          </p>
         </div>
       ))}
     </main>
