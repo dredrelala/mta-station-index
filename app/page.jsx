@@ -13,7 +13,6 @@ export default function Home() {
 
   useEffect(() => {
     async function loadStations() {
-
       const { data, error } = await supabase
         .from("stations")
         .select("*");
@@ -24,9 +23,6 @@ export default function Home() {
       }
 
       const ranked = (data || []).map((station) => {
-
-        // Uses database values if they exist
-        // otherwise defaults
 
         const cleanliness =
           station.cleanliness ?? 7;
@@ -39,7 +35,7 @@ export default function Home() {
 
         const accessibility =
           station.accessibility ??
-          (station.division==="IRT" ? 9 : 7);
+          (station.division === "IRT" ? 9 : 7);
 
         const transfers =
           station.line
@@ -48,11 +44,11 @@ export default function Home() {
 
         const score = Math.round(
           (
-            cleanliness * .30 +
-            reliability * .25 +
-            (10-busyness) * .20 +
-            accessibility * .15 +
-            transfers * .10
+            cleanliness * 0.30 +
+            reliability * 0.25 +
+            (10 - busyness) * 0.20 +
+            accessibility * 0.15 +
+            transfers * 0.10
           ) * 10
         );
 
@@ -67,52 +63,48 @@ export default function Home() {
         };
       });
 
-      ranked.sort(
-        (a,b)=>b.score-a.score
-      );
+      ranked.sort((a, b) => b.score - a.score);
 
       setStations(ranked);
     }
 
     loadStations();
-
   }, []);
 
   return (
     <main
       style={{
-        background:"#111",
-        minHeight:"100vh",
-        color:"white",
-        padding:"40px",
-        fontFamily:"Arial"
+        background: "#111",
+        minHeight: "100vh",
+        color: "white",
+        padding: "40px",
+        fontFamily: "Arial"
       }}
     >
       <h1>🚇 MTA Station Index V3</h1>
 
-      <p>
-        {stations.length} stations found
-      </p>
+      <p>{stations.length} stations found</p>
 
-      {stations.map((station,index)=>(
-
+      {stations.map((station, index) => (
         <div
           key={station.id || index}
           style={{
-            padding:"30px",
-            marginBottom:"20px",
-            border:"1px solid #333",
-            borderRadius:"20px",
-            background:"#1b1b1b"
+            padding: "30px",
+            marginBottom: "20px",
+            border: "1px solid #333",
+            borderRadius: "20px",
+            background: "#1b1b1b"
           }}
         >
-
           <h2>
-            #{index+1} {station.name}
+            #{index + 1} {station.name}
           </h2>
 
           <p>🚇 {station.line}</p>
-          <p>📍 {station.borough}</p>
+
+          <p>
+            📍 {station.borough || "NYC"}
+          </p>
 
           <h2>
             ⭐ {station.score}/100
@@ -124,21 +116,22 @@ export default function Home() {
           <p>♿ {station.accessibility}/10</p>
           <p>🔄 {station.transfers}/10</p>
 
-          <p style={{
-            color:"#888",
-            fontSize:"12px"
-          }}>
-            Updated: {
-              station.updated_at
+          <p
+            style={{
+              color: "#888",
+              fontSize: "12px",
+              marginTop: "20px"
+            }}
+          >
+            Updated:{" "}
+            {station.updated_at
               ? new Date(
                   station.updated_at
                 ).toLocaleString()
-              : "Unknown"
-            }
+              : new Date()
+                  .toLocaleString()}
           </p>
-
         </div>
-
       ))}
     </main>
   );
