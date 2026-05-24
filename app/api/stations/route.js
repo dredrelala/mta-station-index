@@ -21,7 +21,7 @@ export async function GET() {
 
     return Response.json({
       success: true,
-      count: data?.length || 0,
+      count: data ? data.length : 0,
       stations: data || [],
       updated: new Date().toISOString()
     });
