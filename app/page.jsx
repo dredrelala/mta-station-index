@@ -6,7 +6,7 @@ const supabase = createClient(
 );
 
 export default async function Home() {
-  const { data, error } = await supabase
+  const { data } = await supabase
     .from("stations")
     .select("*")
     .limit(20);
@@ -20,45 +20,43 @@ export default async function Home() {
         background: "black",
         color: "white",
         padding: "40px",
-        fontFamily: "Arial"
+        fontFamily: "Arial",
       }}
     >
       <h1>🚇 MTA Station Index</h1>
 
       <p>{stations.length} NYC subway stations found</p>
 
-      {error ? (
-        <p>Error loading data</p>
-      ) : (
-        <div
-          style={{
-            marginTop: "20px",
-            padding: "20px",
-            border: "1px solid #333",
-            borderRadius: "20px"
-          }}
-        >
-          <h2>All Stations</h2>
+      <div
+        style={{
+          marginTop: "20px",
+          padding: "20px",
+          border: "1px solid #333",
+          borderRadius: "20px",
+        }}
+      >
+        <h2>All Stations</h2>
 
-          {stations.map((station, index) => (
-            <div
-              key={index}
-              style={{
-                padding: "15px",
-                borderBottom: "1px solid #333"
-              }}
-            >
-              <h3>
-                #{index + 1} {station["Stop Name"]}
-              </h3>
+        {stations.map((station, index) => (
+          <div
+            key={index}
+            style={{
+              padding: "15px",
+              borderBottom: "1px solid #333",
+            }}
+          >
+            <h3>
+              #{index + 1} {station["Stop Name"]}
+            </h3>
 
-              <p>Line: {station["Line"]}</p>
-              <p>Borough: {station["Borough"]}</p>
-              <p>Division: {station["Division"]}</p>
-            </div>
-          ))}
-        </div>
-      )}
+            <p>Line: {station["Line"]}</p>
+
+            <p>Borough: {station["Borough"]}</p>
+
+            <p>Division: {station["Division"]}</p>
+          </div>
+        ))}
+      </div>
     </main>
   );
 }
