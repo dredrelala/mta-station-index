@@ -1,4 +1,3 @@
-app/page.jsx
 export default function Home() {
   return (
     <main style={{
