@@ -35,8 +35,7 @@ export default function Home() {
         background: "#111",
         color: "white",
         minHeight: "100vh",
-        padding: "30px",
-        fontFamily: "Arial"
+        padding: "30px"
       }}
     >
       <h1>🚇 MTA Station Index</h1>
@@ -51,21 +50,25 @@ export default function Home() {
             padding: "20px 0"
           }}
         >
-          <h2>
-            #{index + 1} {station.name}
-          </h2>
+          <h2>#{index + 1} {station.name}</h2>
 
           <p>Line: {station.line}</p>
           <p>Borough: {station.borough}</p>
           <p>Division: {station.division}</p>
 
-          <p><strong>Overall Score:</strong> {station.score}</p>
-          <p><strong>Safety:</strong> {station.safety_score ?? 5}/10</p>
-          <p><strong>Reliability:</strong> {station.reliability_score ?? 5}/10</p>
-          <p><strong>Cleanliness:</strong> {station.cleanliness_score ?? 5}/10</p>
-          <p><strong>Busyness:</strong> {station.busyness_score ?? 5}/10</p>
-          <p><strong>Accessibility:</strong> {station.accessibility_score ?? 5}/10</p>
-          <p><strong>Transfers:</strong> {station.transfer_score ?? 5}/10</p>
+          <p>Overall Score: {station.score}</p>
+
+          <p>Safety: {station.safety_score || 5}/10</p>
+
+          <p>Reliability: {station.reliability_score || 5}/10</p>
+
+          <p>Cleanliness: {station.cleanliness_score || 5}/10</p>
+
+          <p>Busyness: {station.busyness_score || 5}/10</p>
+
+          <p>Accessibility: {station.accessibility_score || 5}/10</p>
+
+          <p>Transfers: {station.transfer_score || 5}/10</p>
         </div>
       ))}
     </main>
