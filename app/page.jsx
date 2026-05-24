@@ -44,13 +44,15 @@ export default async function Home() {
               borderBottom: "1px solid #333"
             }}
           >
-          <h3>
+         <h3>
   #{index + 1} {station.name}
 </h3>
 
 <p>Line: {station.line}</p>
 
-<p>Borough: {station.borough}</p> 
+<p>Borough: {station.borough}</p>
+
+<p>Division: {station.division}</p>
             
             <p>Division: {station["Division"]}</p>
           </div>
