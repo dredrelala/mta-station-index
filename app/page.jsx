@@ -1,40 +1,108 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
+
 export default function Home() {
+  const [stations, setStations] = useState([]);
+
+  useEffect(() => {
+    async function loadStations() {
+      const { data } = await supabase
+        .from("stations")
+        .select("*");
+
+      const ranked = (data || []).map((station) => {
+
+        const cleanliness = Math.floor(Math.random()*4)+6;
+        const reliability = Math.floor(Math.random()*4)+6;
+        const busyness = Math.floor(Math.random()*10)+1;
+        const accessibility = station.division==="IRT" ? 9 : 7;
+        const transfers = station.line
+          ? station.line.split("-").length+3
+          : 3;
+
+        const score = Math.round(
+          (
+            cleanliness*.30 +
+            reliability*.25 +
+            (10-busyness)*.20 +
+            accessibility*.15 +
+            transfers*.10
+          )*10
+        );
+
+        return {
+          ...station,
+          score,
+          cleanliness,
+          reliability,
+          busyness,
+          accessibility,
+          transfers
+        };
+      });
+
+      ranked.sort((a,b)=>b.score-a.score);
+
+      setStations(ranked);
+    }
+
+    loadStations();
+  }, []);
+
   return (
     <main
       style={{
-        background: "#111",
-        color: "white",
-        minHeight: "100vh",
-        padding: "40px",
-        fontFamily: "Arial"
+        background:"#111",
+        minHeight:"100vh",
+        color:"white",
+        padding:"40px",
+        fontFamily:"Arial"
       }}
     >
-      <h1>🚇 MTA Station Index V3</h1>
+      <h1>🚇 MTA Station Index</h1>
 
-      <div
-        style={{
-          padding: "30px",
-          border: "1px solid #444",
-          borderRadius: "20px",
-          marginTop: "20px"
-        }}
-      >
-        <h2>#1 Times Sq–42 St</h2>
+      <p>{stations.length} stations found</p>
 
-        <p>🚇 Lines: N Q R W 1 2 3 7 S</p>
-        <p>📍 Borough: Manhattan</p>
-        <p>🏢 Division: IRT</p>
+      {stations.map((station,index)=>(
 
-        <h2>⭐ Score: 92/100</h2>
+        <div
+          key={index}
+          style={{
+            padding:"30px",
+            marginBottom:"20px",
+            border:"1px solid #333",
+            borderRadius:"20px",
+            background:"#1b1b1b"
+          }}
+        >
 
-        <p>🧼 Cleanliness: 8/10</p>
-        <p>⏱ Reliability: 9/10</p>
-        <p>👥 Busyness: 4/10</p>
-        <p>♿ ADA: 10/10</p>
-        <p>🔄 Transfers: 9/10</p>
-      </div>
+          <h2>
+            #{index+1} {station.name}
+          </h2>
+
+          <p>🚇 {station.line}</p>
+          <p>📍 {station.borough}</p>
+
+          <h2>
+            ⭐ {station.score}/100
+          </h2>
+
+          <p>🧼 {station.cleanliness}/10</p>
+          <p>⏱ {station.reliability}/10</p>
+          <p>👥 {station.busyness}/10</p>
+          <p>♿ {station.accessibility}/10</p>
+          <p>🔄 {station.transfers}/10</p>
+
+        </div>
+
+      ))}
     </main>
   );
 }
