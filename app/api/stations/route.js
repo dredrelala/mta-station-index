@@ -1,26 +1,27 @@
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+process.env.NEXT_PUBLIC_SUPABASE_URL,
+process.env.SUPABASE_SERVICE_ROLE_KEY
+);
+
 export async function GET() {
-  const { data, error } = await supabase
-    .from("stations")
-    .select("*")
-    .order("score", { ascending: false });
+const { data, error } = await supabase
+.from("stations")
+.select("*")
+.order("score", { ascending: false });
 
-  if (error) {
-    return Response.json({
-      success: false,
-      error: error.message
-    });
-  }
+if (error) {
+return Response.json({
+success:false,
+error:error.message
+});
+}
 
-  const stations = data.filter(station =>
-    station.name &&
-    station.borough &&
-    station.line
-  );
-
-  return Response.json({
-    success: true,
-    count: stations.length,
-    stations: stations,
-    updated: new Date().toISOString()
-  });
+return Response.json({
+success:true,
+count:data?.length || 0,
+stations:data || [],
+updated:new Date().toISOString()
+});
 }
