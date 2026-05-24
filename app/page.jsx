@@ -1,6 +1,3 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
@@ -8,28 +5,13 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
-export default function Home() {
-  const [stations, setStations] = useState([]);
-  const [errorMessage, setErrorMessage] = useState("");
+export default async function Home() {
+  const { data, error } = await supabase
+    .from("stations")
+    .select("*")
+    .limit(20);
 
-  useEffect(() => {
-    async function loadStations() {
-      const { data, error } = await supabase
-        .from("stations")
-        .select("*")
-        .limit(20);
-
-      if (error) {
-        console.log(error);
-        setErrorMessage(JSON.stringify(error));
-        return;
-      }
-
-      setStations(data || []);
-    }
-
-    loadStations();
-  }, []);
+  const stations = data || [];
 
   return (
     <main
@@ -45,16 +27,10 @@ export default function Home() {
 
       <p>{stations.length} stations found</p>
 
-      {errorMessage && (
-        <div
-          style={{
-            padding: "15px",
-            border: "1px solid red",
-            marginBottom: "20px"
-          }}
-        >
-          Error: {errorMessage}
-        </div>
+      {error && (
+        <p>
+          Error: {JSON.stringify(error)}
+        </p>
       )}
 
       {stations.map((station, index) => (
