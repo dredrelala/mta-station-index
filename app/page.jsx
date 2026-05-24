@@ -16,7 +16,7 @@ export default function Home() {
       const { data, error } = await supabase
         .from("stations")
         .select("*")
-        .order("name", { ascending: true });
+        .order("name");
 
       if (error) {
         console.error(error);
@@ -35,8 +35,7 @@ export default function Home() {
         background: "#111",
         color: "white",
         minHeight: "100vh",
-        padding: "30px",
-        fontFamily: "Arial"
+        padding: "30px"
       }}
     >
       <h1>🚇 MTA Station Index</h1>
@@ -51,20 +50,15 @@ export default function Home() {
             padding: "20px 0"
           }}
         >
-          <h2>
-            #{index + 1} {station.name}
-          </h2>
+          <h2>#{index + 1} {station.name}</h2>
 
-          <p><strong>Line:</strong> {station.line}</p>
+          <p>Line: {station.line}</p>
 
-          <p><strong>Borough:</strong> {station.borough}</p>
+          <p>Borough: {station.borough}</p>
 
-          <p><strong>Division:</strong> {station.division}</p>
+          <p>Division: {station.division}</p>
 
-          <p>
-            <strong>Score:</strong>{" "}
-            {station.overall_score ?? 0}
-          </p>
+          <p>Score: {station.overall_score || 50}</p>
         </div>
       ))}
     </main>
