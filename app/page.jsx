@@ -56,7 +56,19 @@ export default function Home() {
           <p>Borough: {station.borough}</p>
           <p>Division: {station.division}</p>
 
-          <p>Overall Score: {station.score}</p>
+          <p>
+Overall Score {
+Math.round(
+(
+((station.cleanliness_score || 5) * 0.30) +
+((station.reliability_score || 5) * 0.25) +
+((10 - (station.busyness_score || 5)) * 0.20) +
+((station.accessibility_score || 5) * 0.15) +
+((station.transfer_score || 5) * 0.10)
+) * 10
+)
+}/100
+</p>
 
           <p>Safety: {station.safety_score || 5}/10</p>
 
