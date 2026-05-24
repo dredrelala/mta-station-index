@@ -12,11 +12,11 @@ export default function Home() {
   const [stations, setStations] = useState([]);
 
   useEffect(() => {
-    async function loadStations() {
+    async function fetchStations() {
       const { data, error } = await supabase
         .from("stations")
         .select("*")
-        .order("id", { ascending: true });
+        .order("name", { ascending: true });
 
       if (error) {
         console.error(error);
@@ -26,7 +26,7 @@ export default function Home() {
       setStations(data || []);
     }
 
-    loadStations();
+    fetchStations();
   }, []);
 
   return (
@@ -52,29 +52,14 @@ export default function Home() {
           }}
         >
           <h2>
-            #{index + 1}{" "}
-            {station["Stop Name"] || "Unknown Station"}
+            #{index + 1} {station.name}
           </h2>
 
-          <p>
-            <strong>Line:</strong>{" "}
-            {station["Line"] || "N/A"}
-          </p>
+          <p><strong>Line:</strong> {station.line}</p>
 
-          <p>
-            <strong>Borough:</strong>{" "}
-            {station["Borough"] || "N/A"}
-          </p>
+          <p><strong>Borough:</strong> {station.borough}</p>
 
-          <p>
-            <strong>Division:</strong>{" "}
-            {station["Division"] || "N/A"}
-          </p>
-
-          <p>
-            <strong>GTFS Stop ID:</strong>{" "}
-            {station["GTFS Stop ID"] || "N/A"}
-          </p>
+          <p><strong>Division:</strong> {station.division}</p>
         </div>
       ))}
     </main>
