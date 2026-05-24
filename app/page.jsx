@@ -10,6 +10,7 @@ const supabase = createClient(
 
 export default function Home() {
   const [stations, setStations] = useState([]);
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     async function loadStations() {
@@ -20,6 +21,7 @@ export default function Home() {
 
       if (error) {
         console.log(error);
+        setErrorMessage(JSON.stringify(error));
         return;
       }
 
@@ -41,7 +43,19 @@ export default function Home() {
     >
       <h1>🚇 MTA Station Index</h1>
 
-      <p>{stations.length} stations loaded</p>
+      <p>{stations.length} stations found</p>
+
+      {errorMessage && (
+        <div
+          style={{
+            padding: "15px",
+            border: "1px solid red",
+            marginBottom: "20px"
+          }}
+        >
+          Error: {errorMessage}
+        </div>
+      )}
 
       {stations.map((station, index) => (
         <div
@@ -51,12 +65,13 @@ export default function Home() {
             borderBottom: "1px solid #333"
           }}
         >
-          <h3>#{index + 1}</h3>
+          <h3>
+            #{index + 1} {station["Stop Name"]}
+          </h3>
 
-          <p>Name: {station["Stop Name"] || "Unknown"}</p>
-          <p>Line: {station["Line"] || "Unknown"}</p>
-          <p>Borough: {station["Borough"] || "Unknown"}</p>
-          <p>Division: {station["Division"] || "Unknown"}</p>
+          <p>Line: {station["Line"]}</p>
+          <p>Borough: {station["Borough"]}</p>
+          <p>Division: {station["Division"]}</p>
         </div>
       ))}
     </main>
