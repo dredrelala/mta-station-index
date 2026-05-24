@@ -23,7 +23,38 @@ export default function Home() {
         return;
       }
 
-      setStations(data || []);
+      setStations(
+  (data || []).map(station => {
+
+    const cleanliness = Math.floor(Math.random() * 4) + 6;
+    const reliability = Math.floor(Math.random() * 4) + 6;
+    const busyness = Math.floor(Math.random() * 10) + 1;
+    const accessibility =
+      station.division === "IRT" ? 8 : 6;
+    const transfers =
+      station.line?.split(" ").length || 1;
+
+    const score = Math.round(
+      (
+        cleanliness * .30 +
+        reliability * .25 +
+        (10 - busyness) * .20 +
+        accessibility * .15 +
+        transfers * .10
+      ) * 10
+    );
+
+    return {
+      ...station,
+      cleanliness_score: cleanliness,
+      reliability_score: reliability,
+      busyness_score: busyness,
+      accessibility_score: accessibility,
+      transfer_score: transfers,
+      score
+    };
+  })
+);
     }
 
     fetchStations();
