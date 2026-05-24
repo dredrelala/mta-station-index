@@ -13,9 +13,17 @@ export default async function Home() {
 
   if (error) {
     return (
-      <div>
-        Error loading stations: {error.message}
-      </div>
+      <main
+        style={{
+          background: "#111",
+          color: "white",
+          minHeight: "100vh",
+          padding: "30px"
+        }}
+      >
+        <h1>Error</h1>
+        <p>{error.message}</p>
+      </main>
     );
   }
 
@@ -41,13 +49,13 @@ export default async function Home() {
           }}
         >
           <h2>
-            #{index + 1} {station.name}
+            #{index + 1} {station.Name || station.name}
           </h2>
 
-          <p>Line: {station.line}</p>
-          <p>Borough: {station.borough}</p>
-          <p>Division: {station.Division}</p>
-          <p>Score: {station.score}</p>
+          <p>Line: {station.Line || station.line}</p>
+          <p>Borough: {station.Borough || station.borough}</p>
+          <p>Division: {station.Division || station.division}</p>
+          <p>Score: {station.score || 0}</p>
         </div>
       ))}
     </main>
