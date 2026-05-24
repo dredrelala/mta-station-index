@@ -8,8 +8,7 @@ const supabase = createClient(
 export default async function Home() {
   const { data } = await supabase
     .from("stations")
-    .select("*")
-    .order("score", { ascending: false });
+    .select("*");
 
   const stations = data || [];
 
@@ -45,10 +44,18 @@ export default async function Home() {
               borderBottom: "1px solid #333"
             }}
           >
-           <h3>#{index + 1} {station["Stop Name"]}</h3>
-<p>Line: {station.Line}</p>
-<p>Borough: {station.Borough}</p>
-<p>Score: {station.score || 50}</p>
+            <h3>
+              #{index + 1} {station["Stop Name"]}
+            </h3>
+
+            <p>Line: {station.Line}</p>
+
+            <p>Borough: {station.Borough}</p>
+
+            <p>
+              ADA Access:{" "}
+              {station.ADA === 1 ? "♿ Accessible" : "Not Accessible"}
+            </p>
           </div>
         ))}
       </div>
