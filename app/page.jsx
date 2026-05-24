@@ -4,147 +4,121 @@ import { useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+ process.env.NEXT_PUBLIC_SUPABASE_URL,
+ process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
 export default function Home() {
-  const [stations, setStations] = useState([]);
+ const [stations,setStations]=useState([]);
 
-  useEffect(() => {
+ useEffect(()=>{
 
-    async function loadStations() {
+   async function loadStations(){
 
-      const stationResponse = await supabase
-        .from("stations")
-        .select("*");
+     const {data}=await supabase
+      .from("stations")
+      .select("*");
 
-      const feedResponse = await fetch("/api/stations");
-      const feedData = await feedResponse.json();
+     const ranked=(data||[]).map((station)=>{
 
-      const liveFeedCount =
-        feedData.feeds.filter(
-          feed => feed.status === 200
-        ).length;
+      const cleanliness=
+      station.cleanliness ||
+      ((station.name.length%5)+6);
 
-      const ranked = (stationResponse.data || []).map((station)=>{
+      const reliability=
+      station.ridership
+      ? Math.min(10,Math.floor(station.ridership/50000))
+      : 5;
 
-        const cleanliness =
-          station.cleanliness ?? 7;
+      const busyness=
+      station.ridership
+      ? Math.min(10,Math.floor(station.ridership/60000))
+      : 5;
 
-        const reliability =
-          Math.min(
-            10,
-            Math.round((liveFeedCount/8)*10)
-          );
+      const accessibility=
+      station.accessible ? 10 : 6;
 
-        const ridership =
-          station.ridership ?? 50000;
+      const transfers=
+      station.line
+      ? station.line.split("-").length
+      : 1;
 
-        const busyness =
-          Math.min(
-            10,
-            Math.max(
-              1,
-              Math.round(ridership/50000)
-            )
-          );
+      const score=Math.round(
+       (
+        cleanliness*.30+
+        reliability*.30+
+        (11-busyness)*.20+
+        accessibility*.10+
+        transfers*.10
+       )*10
+      );
 
-        const accessibility =
-          station.accessible ? 10 : 6;
+      return{
+        ...station,
+        score,
+        cleanliness,
+        reliability,
+        busyness,
+        accessibility,
+        transfers
+      };
 
-        const transfers =
-          station.line
-            ? station.line.split("-").length + 3
-            : 3;
+     });
 
-        const score = Math.round(
-          (
-            cleanliness * .15 +
-            reliability * .25 +
-            (10-busyness) * .25 +
-            accessibility * .20 +
-            transfers * .15
-          ) * 10
-        );
+     ranked.sort((a,b)=>b.score-a.score);
 
-        return {
-          ...station,
-          score,
-          cleanliness,
-          reliability,
-          busyness,
-          accessibility,
-          transfers
-        };
+     setStations(ranked);
 
-      });
+   }
 
-      ranked.sort((a,b)=>{
+   loadStations();
 
-        if (b.score !== a.score) {
-          return b.score-a.score;
-        }
+ },[]);
 
-        return a.busyness-b.busyness;
-      });
+ return(
+ <main style={{
+ background:"#111",
+ minHeight:"100vh",
+ color:"white",
+ padding:"40px",
+ fontFamily:"Arial"
+ }}>
 
-      setStations(ranked);
+ <h1>🚇 MTA Station Index V6</h1>
 
-    }
+ <p>{stations.length} stations found</p>
 
-    loadStations();
+ {stations.map((station,index)=>(
 
-  },[]);
+ <div
+ key={index}
+ style={{
+ padding:"30px",
+ marginBottom:"20px",
+ border:"1px solid #333",
+ borderRadius:"20px",
+ background:"#1b1b1b"
+ }}
+ >
 
-  return (
+ <h2>#{index+1} {station.name}</h2>
 
-    <main
-      style={{
-        background:"#111",
-        minHeight:"100vh",
-        color:"white",
-        padding:"40px",
-        fontFamily:"Arial"
-      }}
-    >
+ <p>🚇 {station.line}</p>
 
-      <h1>🚇 MTA Station Index V7</h1>
+ <p>📍 {station.borough}</p>
 
-      <p>{stations.length} stations found</p>
+ <h2>⭐ {station.score}/100</h2>
 
-      {stations.map((station,index)=>(
+ <p>🧼 {station.cleanliness}/10</p>
+ <p>⏱ {station.reliability}/10</p>
+ <p>👥 {station.busyness}/10</p>
+ <p>♿ {station.accessibility}/10</p>
+ <p>🔄 {station.transfers}/10</p>
 
-        <div
-          key={index}
-          style={{
-            padding:"30px",
-            marginBottom:"20px",
-            border:"1px solid #333",
-            borderRadius:"20px",
-            background:"#1b1b1b"
-          }}
-        >
+ </div>
 
-          <h2>#{index+1} {station.name}</h2>
+ ))}
 
-          <p>🚇 {station.line}</p>
-          <p>📍 {station.borough}</p>
-
-          <h2>⭐ {station.score}/100</h2>
-
-          <p>🧼 {station.cleanliness}/10</p>
-          <p>⏱ {station.reliability}/10</p>
-          <p>👥 {station.busyness}/10</p>
-          <p>♿ {station.accessibility}/10</p>
-          <p>🔄 {station.transfers}/10</p>
-
-        </div>
-
-      ))}
-
-    </main>
-
-  );
-
+ </main>
+ )
 }
