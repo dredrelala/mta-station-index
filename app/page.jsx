@@ -1,24 +1,84 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+);
 
 export default function Home() {
 
-  const [status,setStatus] = useState(null);
+  const [stations, setStations] = useState([]);
 
-  useEffect(()=>{
+  useEffect(() => {
 
-    async function loadData(){
+    async function loadStations() {
 
-      const res = await fetch("/api/stations");
+      const stationResponse = await supabase
+        .from("stations")
+        .select("*");
 
-      const data = await res.json();
+      const feedResponse = await fetch("/api/stations");
+      const feedData = await feedResponse.json();
 
-      setStatus(data);
+      const liveFeedCount =
+        feedData.feeds.filter(
+          feed => feed.status === 200
+        ).length;
+
+      const ranked = (stationResponse.data || []).map((station)=>{
+
+        const cleanliness =
+          station.cleanliness ?? 7;
+
+        const reliability =
+          Math.min(
+            10,
+            Math.round(
+              (liveFeedCount / 8) * 10
+            )
+          );
+
+        const busyness =
+          station.busyness ?? 5;
+
+        const accessibility =
+          station.accessibility ?? 7;
+
+        const transfers =
+          station.line
+          ? station.line.split("-").length + 3
+          : 3;
+
+        const score = Math.round(
+          (
+            cleanliness * .30 +
+            reliability * .25 +
+            (10 - busyness) * .20 +
+            accessibility * .15 +
+            transfers * .10
+          ) * 10
+        );
+
+        return {
+          ...station,
+          score,
+          reliability
+        };
+
+      });
+
+      ranked.sort(
+        (a,b)=>b.score-a.score
+      );
+
+      setStations(ranked);
 
     }
 
-    loadData();
+    loadStations();
 
   },[]);
 
@@ -27,55 +87,51 @@ export default function Home() {
     <main
       style={{
         background:"#111",
-        color:"white",
         minHeight:"100vh",
+        color:"white",
         padding:"40px",
         fontFamily:"Arial"
       }}
     >
 
-      <h1>🚇 MTA Station Index V4</h1>
+      <h1>🚇 MTA Station Index V5</h1>
 
-      <h2>
-        Feed Status
-      </h2>
+      <p>
+        {stations.length} stations found
+      </p>
 
-      {status?.feeds?.map((feed,index)=>(
+      {stations.map((station,index)=>(
 
         <div
           key={index}
           style={{
-            padding:"20px",
+            padding:"30px",
+            marginBottom:"20px",
             border:"1px solid #333",
             borderRadius:"20px",
-            marginBottom:"20px"
+            background:"#1b1b1b"
           }}
         >
 
-          <p>
-            Feed #{index+1}
-          </p>
+          <h2>
+            #{index+1} {station.name}
+          </h2>
 
-          <p>
-            Status:
-            {feed.status===200
-              ? " ✅ Live"
-              : " ❌ Offline"}
-          </p>
+          <p>🚇 {station.line}</p>
+          <p>📍 {station.borough}</p>
+
+          <h2>
+            ⭐ {station.score}/100
+          </h2>
+
+          <p>🧼 {station.cleanliness ?? 7}/10</p>
+          <p>⏱ {station.reliability}/10</p>
+          <p>👥 {station.busyness ?? 5}/10</p>
+          <p>♿ {station.accessibility ?? 7}/10</p>
 
         </div>
 
       ))}
-
-      <p>
-        Updated:
-        {" "}
-        {status?.updated
-          ? new Date(
-              status.updated
-            ).toLocaleString()
-          : ""}
-      </p>
 
     </main>
 
