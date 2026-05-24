@@ -10,6 +10,7 @@ const supabase = createClient(
 
 export default function Home() {
   const [stations, setStations] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadStations() {
@@ -18,12 +19,14 @@ export default function Home() {
         .select("*")
         .limit(20);
 
-      if (error) {
-        console.log(error);
-      } else {
-        console.log(data);
-        setStations(data || []);
+      console.log("DATA:", data);
+      console.log("ERROR:", error);
+
+      if (!error && data) {
+        setStations(data);
       }
+
+      setLoading(false);
     }
 
     loadStations();
@@ -40,31 +43,56 @@ export default function Home() {
     >
       <h1>🚇 MTA Station Index</h1>
 
-      <p>{stations.length} stations found</p>
+      {loading ? (
+        <p>Loading...</p>
+      ) : (
+        <>
+          <p>{stations.length} stations found</p>
 
-      {stations.map((station) => (
-        <div
-          key={station["Station ID"]}
-          style={{
-            border:"1px solid gray",
-            padding:"15px",
-            marginBottom:"10px",
-            borderRadius:"8px"
-          }}
-        >
-          <h2>{station["Stop Name"]}</h2>
+          {stations.map((station, index) => (
+            <div
+              key={index}
+              style={{
+                border: "1px solid gray",
+                borderRadius: "8px",
+                padding: "15px",
+                marginBottom: "10px"
+              }}
+            >
+              <h2>
+                {station["Stop Name"] ||
+                  station.name ||
+                  "Unknown Station"}
+              </h2>
 
-          <p>Line: {station["Line"]}</p>
+              <p>
+                Line:{" "}
+                {station["Line"] ||
+                  station.line ||
+                  "N/A"}
+              </p>
 
-          <p>Borough: {station["Borough"]}</p>
+              <p>
+                Borough:{" "}
+                {station["Borough"] ||
+                  station.borough ||
+                  "N/A"}
+              </p>
 
-          <p>
-            Coordinates:
-            {station["GTFS Latitude"]},
-            {station["GTFS Longitude"]}
-          </p>
-        </div>
-      ))}
+              <p>
+                Coordinates:{" "}
+                {(station["GTFS Latitude"] ||
+                  station.latitude ||
+                  "N/A")}
+                {" , "}
+                {(station["GTFS Longitude"] ||
+                  station.longitude ||
+                  "N/A")}
+              </p>
+            </div>
+          ))}
+        </>
+      )}
     </main>
   );
 }
