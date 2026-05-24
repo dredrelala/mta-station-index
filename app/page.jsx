@@ -9,7 +9,6 @@ const supabase = createClient(
 );
 
 export default function Home() {
-
   const [stations, setStations] = useState([]);
 
   useEffect(() => {
@@ -36,25 +35,23 @@ export default function Home() {
         const reliability =
           Math.min(
             10,
-            Math.round(
-              (liveFeedCount / 8) * 10
+            Math.round((liveFeedCount/8)*10)
+          );
+
+        const ridership =
+          station.ridership ?? 50000;
+
+        const busyness =
+          Math.min(
+            10,
+            Math.max(
+              1,
+              Math.round(ridership/50000)
             )
           );
 
-        const busyness =
-          station.ridership
-            ? Math.min(
-                10,
-                Math.round(
-                  station.ridership / 100000
-                )
-              )
-            : 5;
-
         const accessibility =
-          station.accessible
-            ? 10
-            : 6;
+          station.accessible ? 10 : 6;
 
         const transfers =
           station.line
@@ -63,11 +60,11 @@ export default function Home() {
 
         const score = Math.round(
           (
-            cleanliness * 0.20 +
-            reliability * 0.30 +
-            (10 - busyness) * 0.20 +
-            accessibility * 0.20 +
-            transfers * 0.10
+            cleanliness * .15 +
+            reliability * .25 +
+            (10-busyness) * .25 +
+            accessibility * .20 +
+            transfers * .15
           ) * 10
         );
 
@@ -83,9 +80,14 @@ export default function Home() {
 
       });
 
-      ranked.sort(
-        (a,b)=>b.score-a.score
-      );
+      ranked.sort((a,b)=>{
+
+        if (b.score !== a.score) {
+          return b.score-a.score;
+        }
+
+        return a.busyness-b.busyness;
+      });
 
       setStations(ranked);
 
@@ -107,11 +109,9 @@ export default function Home() {
       }}
     >
 
-      <h1>🚇 MTA Station Index V6</h1>
+      <h1>🚇 MTA Station Index V7</h1>
 
-      <p>
-        {stations.length} stations found
-      </p>
+      <p>{stations.length} stations found</p>
 
       {stations.map((station,index)=>(
 
@@ -126,16 +126,12 @@ export default function Home() {
           }}
         >
 
-          <h2>
-            #{index+1} {station.name}
-          </h2>
+          <h2>#{index+1} {station.name}</h2>
 
           <p>🚇 {station.line}</p>
           <p>📍 {station.borough}</p>
 
-          <h2>
-            ⭐ {station.score}/100
-          </h2>
+          <h2>⭐ {station.score}/100</h2>
 
           <p>🧼 {station.cleanliness}/10</p>
           <p>⏱ {station.reliability}/10</p>
