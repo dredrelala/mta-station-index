@@ -45,11 +45,10 @@ export default async function Home() {
               borderBottom: "1px solid #333"
             }}
           >
-            <h3>
-              #{index + 1} {station.name}
-            </h3>
-
-            <p>Score: {station.score}</p>
+           <h3>#{index + 1} {station["Stop Name"]}</h3>
+<p>Line: {station.Line}</p>
+<p>Borough: {station.Borough}</p>
+<p>Score: {station.score || 50}</p>
           </div>
         ))}
       </div>
