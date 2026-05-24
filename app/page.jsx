@@ -6,9 +6,12 @@ const supabase = createClient(
 );
 
 export default async function Home() {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("stations")
-    .select("*");
+    .select("*")
+    .limit(20);
+
+  console.log(data);
 
   const stations = data || [];
 
@@ -24,7 +27,11 @@ export default async function Home() {
     >
       <h1>🚇 MTA Station Index</h1>
 
-      <p>{stations.length} NYC subway stations</p>
+      <p>{stations.length} NYC subway stations found</p>
+
+      {error && (
+        <p>Error loading data</p>
+      )}
 
       <div
         style={{
@@ -44,17 +51,13 @@ export default async function Home() {
               borderBottom: "1px solid #333"
             }}
           >
-         <h3>
-  #{index + 1} {station.name}
-</h3>
+            <h3>
+              #{index + 1} {station["Stop Name"] || "No Name"}
+            </h3>
 
-<p>Line: {station.line}</p>
-
-<p>Borough: {station.borough}</p>
-
-<p>Division: {station.division}</p>
-            
-            <p>Division: {station["Division"]}</p>
+            <p>Line: {station["Line"] || "Missing"}</p>
+            <p>Borough: {station["Borough"] || "Missing"}</p>
+            <p>Division: {station["Division"] || "Missing"}</p>
           </div>
         ))}
       </div>
