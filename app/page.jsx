@@ -11,8 +11,6 @@ export default async function Home() {
     .select("*")
     .limit(20);
 
-  console.log(data);
-
   const stations = data || [];
 
   return (
@@ -29,38 +27,38 @@ export default async function Home() {
 
       <p>{stations.length} NYC subway stations found</p>
 
-      {error && (
+      {error ? (
         <p>Error loading data</p>
+      ) : (
+        <div
+          style={{
+            marginTop: "20px",
+            padding: "20px",
+            border: "1px solid #333",
+            borderRadius: "20px"
+          }}
+        >
+          <h2>All Stations</h2>
+
+          {stations.map((station, index) => (
+            <div
+              key={index}
+              style={{
+                padding: "15px",
+                borderBottom: "1px solid #333"
+              }}
+            >
+              <h3>
+                #{index + 1} {station["Stop Name"]}
+              </h3>
+
+              <p>Line: {station["Line"]}</p>
+              <p>Borough: {station["Borough"]}</p>
+              <p>Division: {station["Division"]}</p>
+            </div>
+          ))}
+        </div>
       )}
-
-      <div
-        style={{
-          marginTop: "20px",
-          padding: "20px",
-          border: "1px solid #333",
-          borderRadius: "20px"
-        }}
-      >
-        <h2>All Stations</h2>
-
-        {stations.map((station, index) => (
-          <div
-            key={index}
-            style={{
-              padding: "15px",
-              borderBottom: "1px solid #333"
-            }}
-          >
-            <h3>
-              #{index + 1} {station["Stop Name"] || "No Name"}
-            </h3>
-
-            <p>Line: {station["Line"] || "Missing"}</p>
-            <p>Borough: {station["Borough"] || "Missing"}</p>
-            <p>Division: {station["Division"] || "Missing"}</p>
-          </div>
-        ))}
-      </div>
     </main>
   );
 }
