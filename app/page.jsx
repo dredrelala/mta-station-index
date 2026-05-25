@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect,useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 
-const supabase = createClient(
+const supabase=createClient(
 process.env.NEXT_PUBLIC_SUPABASE_URL,
 process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
@@ -12,9 +12,19 @@ export default function Home(){
 
 const [stations,setStations]=useState([]);
 const [search,setSearch]=useState("");
+const [favorites,setFavorites]=useState([]);
 const [sortBy,setSortBy]=useState("score");
+const [borough,setBorough]=useState("All");
+const [location,setLocation]=useState(null);
 
 useEffect(()=>{
+
+const saved=
+JSON.parse(
+localStorage.getItem("favorites")
+)||[];
+
+setFavorites(saved);
 
 async function loadStations(){
 
@@ -24,14 +34,16 @@ const {data}=await supabase
 
 const ranked=(data||[]).map((station)=>{
 
-const cleanliness=Math.floor(Math.random()*4)+6;
-const reliability=Math.floor(Math.random()*4)+6;
-const busyness=Math.floor(Math.random()*10)+1;
+const reliability=
+Math.floor(Math.random()*4)+6;
+
+const crowding=
+Math.floor(Math.random()*10)+1;
 
 const accessibility=
 station.line?.includes("-")
-? 9
-: 7;
+?9
+:7;
 
 const transfers=
 station.line?.split("-").length+2 || 3;
@@ -39,23 +51,30 @@ station.line?.split("-").length+2 || 3;
 const score=Math.round(
 
 (
-cleanliness*2+
 reliability*3+
-(11-busyness)*2+
+(11-crowding)*2+
 accessibility+
 transfers
-)/8*10
+)
+/7
+*10
 
 );
 
 return{
+
 ...station,
 score,
-cleanliness,
 reliability,
-busyness,
+crowding,
 accessibility,
-transfers
+transfers,
+
+distance:
+Math.floor(
+Math.random()*20
+)+1
+
 };
 
 });
@@ -68,48 +87,91 @@ loadStations();
 
 },[]);
 
-const filtered=[...stations]
-.filter(station=>
+function getLocation(){
 
+navigator.geolocation.getCurrentPosition(
+
+(position)=>{
+
+setLocation({
+
+lat:position.coords.latitude,
+lng:position.coords.longitude
+
+});
+
+}
+
+);
+
+}
+
+function toggleFavorite(name){
+
+let updated;
+
+if(favorites.includes(name)){
+
+updated=
+favorites.filter(
+item=>item!==name
+);
+
+}else{
+
+updated=
+[...favorites,name];
+
+}
+
+setFavorites(updated);
+
+localStorage.setItem(
+"favorites",
+JSON.stringify(updated)
+);
+
+}
+
+const filtered=[...stations]
+
+.filter(station=>{
+
+const searchMatch=
 station.name
 ?.toLowerCase()
-.includes(search.toLowerCase())
+.includes(
+search.toLowerCase()
+);
 
-)
+const boroughMatch=
+
+borough==="All"
+?true
+:station.borough===borough;
+
+return searchMatch
+&& boroughMatch;
+
+})
 
 .sort((a,b)=>{
 
+if(location){
+
+return a.distance-b.distance;
+
+}
+
 if(sortBy==="score"){
+
 return b.score-a.score;
-}
 
-if(sortBy==="reliability"){
-return b.reliability-a.reliability;
-}
-
-if(sortBy==="crowding"){
-return a.busyness-b.busyness;
 }
 
 return 0;
 
 });
-
-const topStation=filtered[0];
-
-function badge(score){
-
-if(score>=80){
-return "🟢 Excellent";
-}
-
-if(score>=60){
-return "🟡 Good";
-}
-
-return "🔴 Needs Improvement";
-
-}
 
 return(
 
@@ -122,66 +184,42 @@ color:"white"
 }}
 >
 
-<h1>🚇 MTA Station Index V9</h1>
+<h1>
+🚇 MTA Station Index V11
+</h1>
 
 <input
-placeholder="Search station..."
+placeholder="Search..."
 value={search}
-onChange={(e)=>setSearch(e.target.value)}
+onChange={(e)=>
+setSearch(e.target.value)
+}
 style={{
 width:"100%",
 padding:"15px",
-borderRadius:"15px",
+borderRadius:"12px",
 marginBottom:"20px"
 }}
 />
 
-<select
-value={sortBy}
-onChange={(e)=>setSortBy(e.target.value)}
+<button
+onClick={getLocation}
 style={{
 padding:"15px",
-borderRadius:"15px",
-marginBottom:"30px"
+marginBottom:"20px"
 }}
 >
 
-<option value="score">
-Best Score
-</option>
+📍 Near Me
 
-<option value="reliability">
-Most Reliable
-</option>
+</button>
 
-<option value="crowding">
-Least Crowded
-</option>
+<p>
 
-</select>
+{filtered.length}
+stations found
 
-{topStation && (
-
-<div
-style={{
-background:"#1a2038",
-padding:"20px",
-borderRadius:"20px",
-marginBottom:"30px"
-}}
->
-
-<h2>🏆 Top Ranked Station</h2>
-
-<h1>{topStation.name}</h1>
-
-<h3>{badge(topStation.score)}</h3>
-
-</div>
-
-)}
-
-<p>{filtered.length} stations found</p>
+</p>
 
 {filtered.map((station,index)=>(
 
@@ -190,24 +228,55 @@ key={index}
 style={{
 padding:"20px",
 marginBottom:"20px",
-borderRadius:"20px",
-background:"#1b1b1b"
+background:"#161d2d",
+borderRadius:"20px"
 }}
 >
 
 <h2>
-#{index+1} {station.name}
+
+{favorites.includes(
+station.name
+)
+?"⭐":"☆"}
+
+{" "}
+
+{station.name}
+
 </h2>
 
-<p>⭐ {station.score}/100</p>
+<button
+onClick={()=>
+toggleFavorite(
+station.name
+)
+}
+>
 
-<p>{badge(station.score)}</p>
+Favorite
 
-<p>🧼 Cleanliness: {station.cleanliness}/10</p>
-<p>🧠 Reliability: {station.reliability}/10</p>
-<p>👥 Crowding: {station.busyness}/10</p>
-<p>♿ Accessibility: {station.accessibility}/10</p>
-<p>🔁 Transfers: {station.transfers}/10</p>
+</button>
+
+<p>
+⭐ {station.score}/100
+</p>
+
+<p>
+📍 {station.distance} mins away
+</p>
+
+<p>
+🧠 {station.reliability}/10
+</p>
+
+<p>
+👥 {station.crowding}/10
+</p>
+
+<p>
+♿ {station.accessibility}/10
+</p>
 
 </div>
 
