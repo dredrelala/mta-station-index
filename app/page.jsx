@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 
-const supabase = createClient(
+const supabase=createClient(
 process.env.NEXT_PUBLIC_SUPABASE_URL,
 process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
@@ -16,6 +16,7 @@ const [favorites,setFavorites]=useState([]);
 const [sortBy,setSortBy]=useState("score");
 const [borough,setBorough]=useState("All");
 const [nearMe,setNearMe]=useState(false);
+const [expanded,setExpanded]=useState(null);
 
 useEffect(()=>{
 
@@ -49,46 +50,36 @@ Math.floor(Math.random()*10)+1;
 const distance=
 Math.floor(Math.random()*20)+1;
 
-/* FORCE transfers */
-
-let calculatedTransfers=1;
+let transfers=1;
 
 if(station.line){
 
-const lineCount=
+transfers=
+Math.max(
+
 station.line
 .toString()
 .replace(/[^A-Za-z0-9]/g," ")
 .trim()
 .split(/\s+/)
 .filter(Boolean)
-.length;
+.length,
 
-calculatedTransfers=
-Math.max(
-lineCount,
 1
+
 );
 
 }
 
-/* FORCE accessibility */
+let accessibility=6;
 
-let calculatedAccessibility=6;
+if(transfers>=6){
 
-if(calculatedTransfers>=6){
+accessibility=10;
 
-calculatedAccessibility=10;
+}else if(transfers>=4){
 
-}else if(
-calculatedTransfers>=4
-){
-
-calculatedAccessibility=8;
-
-}else{
-
-calculatedAccessibility=6;
+accessibility=8;
 
 }
 
@@ -98,8 +89,8 @@ const score=Math.round(
 cleanliness*2+
 reliability*3+
 (11-crowding)*2+
-calculatedAccessibility+
-calculatedTransfers+
+accessibility+
+transfers+
 (11-delayScore)
 )
 /9
@@ -116,15 +107,9 @@ reliability,
 crowding,
 delayScore,
 distance,
-
-transfers:
-calculatedTransfers,
-
-accessibility:
-calculatedAccessibility,
-
+transfers,
+accessibility,
 updated:"Today",
-
 score
 
 };
@@ -132,9 +117,11 @@ score
 });
 
 setStations(
+
 ranked.sort(
 (a,b)=>b.score-a.score
 )
+
 );
 
 }
@@ -190,15 +177,21 @@ return "🔴 Weak";
 
 function trend(station){
 
-if(station.delayScore>=8){
+if(
+station.delayScore>=8
+){
 return "⬆ Delays increasing";
 }
 
-if(station.crowding>=8){
+if(
+station.crowding>=8
+){
 return "⬆ Crowding rising";
 }
 
-if(station.reliability>=8){
+if(
+station.reliability>=8
+){
 return "⬇ Reliability improving";
 }
 
@@ -208,9 +201,9 @@ return "➡ Stable";
 
 const filtered=[...stations]
 
-.filter((station)=>{
+.filter(station=>{
 
-const matchesSearch=
+const searchMatch=
 
 station.name
 ?.toLowerCase()
@@ -218,14 +211,14 @@ station.name
 search.toLowerCase()
 );
 
-const matchesBorough=
+const boroughMatch=
 
 borough==="All"
 ?true
 :station.borough===borough;
 
-return matchesSearch
-&& matchesBorough;
+return searchMatch
+&& boroughMatch;
 
 })
 
@@ -273,21 +266,29 @@ color:"white"
 }}
 >
 
-<h1>
-🚇 MTA Station Index V23
+<h1
+style={{
+fontSize:"48px",
+marginBottom:"25px"
+}}
+>
+🚇 MTA Station Index V24
 </h1>
 
 <input
 placeholder="Search station..."
 value={search}
 onChange={(e)=>
-setSearch(e.target.value)
+setSearch(
+e.target.value
+)
 }
 style={{
 width:"100%",
-padding:"15px",
-borderRadius:"15px",
-marginBottom:"15px"
+padding:"18px",
+borderRadius:"16px",
+fontSize:"16px",
+marginBottom:"20px"
 }}
 />
 
@@ -296,15 +297,21 @@ style={{
 display:"flex",
 gap:"10px",
 flexWrap:"wrap",
-marginBottom:"20px"
+marginBottom:"25px"
 }}
 >
 
 <select
 value={sortBy}
 onChange={(e)=>
-setSortBy(e.target.value)
+setSortBy(
+e.target.value
+)
 }
+style={{
+padding:"10px",
+borderRadius:"10px"
+}}
 >
 
 <option value="score">
@@ -324,8 +331,14 @@ Least Crowded
 <select
 value={borough}
 onChange={(e)=>
-setBorough(e.target.value)
+setBorough(
+e.target.value
+)
 }
+style={{
+padding:"10px",
+borderRadius:"10px"
+}}
 >
 
 <option>All</option>
@@ -338,8 +351,14 @@ setBorough(e.target.value)
 
 <button
 onClick={()=>
-setNearMe(!nearMe)
+setNearMe(
+!nearMe
+)
 }
+style={{
+padding:"10px",
+borderRadius:"10px"
+}}
 >
 📍 Near Me
 </button>
@@ -350,10 +369,11 @@ setNearMe(!nearMe)
 
 <div
 style={{
-padding:"20px",
-background:"#1a2038",
-borderRadius:"20px",
-marginBottom:"20px"
+padding:"35px",
+background:
+"linear-gradient(135deg,#273f85,#1c2955)",
+borderRadius:"25px",
+marginBottom:"35px"
 }}
 >
 
@@ -361,70 +381,186 @@ marginBottom:"20px"
 🏆 Top Ranked Station
 </h2>
 
-<h1>
+<h1
+style={{
+fontSize:"44px"
+}}
+>
 {topStation.name}
 </h1>
 
-<p>
+<h2
+style={{
+color:"#8BE28B"
+}}
+>
 ⭐ {topStation.score}/100
-</p>
+</h2>
 
 </div>
 
 )}
 
-<p>
-{filtered.length}
-stations found
+<p
+style={{
+marginBottom:"25px",
+fontSize:"18px"
+}}
+>
+{filtered.length} stations found
 </p>
 
 {filtered.map((station,index)=>(
 
 <div
+
 key={index}
+
+onClick={()=>
+
+setExpanded(
+expanded===index
+?null
+:index
+)
+
+}
+
 style={{
-padding:"20px",
+
+padding:"25px",
 marginBottom:"20px",
 background:"#151c2e",
-borderRadius:"20px"
+borderRadius:"20px",
+cursor:"pointer",
+transition:"0.2s"
+
 }}
+
 >
 
 <h2>
+
 {favorites.includes(
 station.name
 )
 ?"⭐":"☆"}
+
 {" "}
-{index+1}.
+
+#{index+1}
+
+•
+
 {station.name}
+
 </h2>
 
 <button
-onClick={()=>
+onClick={(e)=>{
+
+e.stopPropagation();
+
 toggleFavorite(
 station.name
 )
-}
+
+}}
+style={{
+marginBottom:"15px"
+}}
 >
+
 Favorite
+
 </button>
 
-<p>🚉 {station.line}</p>
-<p>📍 {station.borough}</p>
+<p>
+⭐
+<span
+style={{
+color:"#8BE28B",
+fontWeight:"bold",
+fontSize:"24px"
+}}
+>
+{station.score}/100
+</span>
+</p>
 
-<p>⭐ {station.score}/100</p>
-<p>{status(station.score)}</p>
-<p>📈 {trend(station)}</p>
+<p>
+{status(
+station.score
+)}
+</p>
 
-<p>🧼 Cleanliness: {station.cleanliness}/10</p>
-<p>🧠 Reliability: {station.reliability}/10</p>
-<p>👥 Crowding: {station.crowding}/10</p>
-<p>♿ Accessibility: {station.accessibility}/10</p>
-<p>🔁 Transfers: {station.transfers}/10</p>
-<p>🚨 Delay Score: {station.delayScore}/10</p>
-<p>📍 Distance: {station.distance} mins away</p>
-<p>🕒 Updated: {station.updated}</p>
+<p>
+📈
+{trend(
+station
+)}
+</p>
+
+{expanded===index && (
+
+<div>
+
+<hr/>
+
+<p>
+🚉
+{station.line}
+</p>
+
+<p>
+📍
+{station.borough}
+</p>
+
+<p>
+🧼 Cleanliness:
+{station.cleanliness}/10
+</p>
+
+<p>
+🧠 Reliability:
+{station.reliability}/10
+</p>
+
+<p>
+👥 Crowding:
+{station.crowding}/10
+</p>
+
+<p>
+♿ Accessibility:
+{station.accessibility}/10
+</p>
+
+<p>
+🔁 Transfers:
+{station.transfers}/10
+</p>
+
+<p>
+🚨 Delay Score:
+{station.delayScore}/10
+</p>
+
+<p>
+📍 Distance:
+{station.distance}
+mins away
+</p>
+
+<p>
+🕒 Updated:
+{station.updated}
+</p>
+
+</div>
+
+)}
 
 </div>
 
@@ -432,6 +568,6 @@ Favorite
 
 </main>
 
-)
+);
 
 }
