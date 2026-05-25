@@ -31,19 +31,53 @@ Math.floor(Math.random()*4)+6;
 const crowding=
 Math.floor(Math.random()*10)+1;
 
-const score=
-Math.round(
+const cleanliness=
+Math.floor(Math.random()*4)+6;
+
+const delayScore=
+Math.floor(Math.random()*10)+1;
+
+const transfers=
+
+station.line
+? station.line
+.split("-")
+.length+1
+:1;
+
+const accessibility=
+
+transfers>=4
+?9
+:transfers>=2
+?7
+:5;
+
+const score=Math.round(
+
 (
-reliability*5+
-(11-crowding)*5
+cleanliness*2+
+reliability*3+
+(11-crowding)*2+
+accessibility+
+transfers+
+(11-delayScore)
 )
+/9
+*10
+
 );
 
 return{
 
 ...station,
+
 reliability,
 crowding,
+cleanliness,
+delayScore,
+transfers,
+accessibility,
 score,
 updated:"Today"
 
@@ -114,7 +148,7 @@ color:"white"
 >
 
 <h1>
-🚇 MTA Station Index V18
+🚇 MTA Station Index V19
 </h1>
 
 <input
@@ -145,6 +179,7 @@ onChange={(e)=>
 setSortBy(e.target.value)
 }
 >
+
 <option value="score">
 Best Score
 </option>
@@ -161,11 +196,13 @@ onChange={(e)=>
 setBorough(e.target.value)
 }
 >
+
 <option>All</option>
 <option>M</option>
 <option>Bk</option>
 <option>Q</option>
 <option>Bx</option>
+
 </select>
 
 </div>
@@ -220,30 +257,18 @@ borderRadius:"20px"
 {station.name}
 </h2>
 
-<p>
-⭐ Score:
-{station.score}
-</p>
+<p>🚉 {station.line}</p>
+<p>📍 {station.borough}</p>
 
-<hr/>
+<p>⭐ Score: {station.score}/100</p>
 
-{Object.entries(station).map(
-([key,value])=>(
-
-<p key={key}>
-
-<strong>
-{key}:
-</strong>
-
-{" "}
-
-{String(value)}
-
-</p>
-
-)
-)}
+<p>🧼 Cleanliness: {station.cleanliness}/10</p>
+<p>🧠 Reliability: {station.reliability}/10</p>
+<p>👥 Crowding: {station.crowding}/10</p>
+<p>♿ Accessibility: {station.accessibility}/10</p>
+<p>🔁 Transfers: {station.transfers}/10</p>
+<p>🚨 Delay Score: {station.delayScore}/10</p>
+<p>🕒 Updated: {station.updated}</p>
 
 </div>
 
