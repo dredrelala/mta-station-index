@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect,useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase=createClient(
@@ -17,7 +17,6 @@ const [sortBy,setSortBy]=useState("score");
 const [borough,setBorough]=useState("All");
 const [nearMe,setNearMe]=useState(false);
 const [expanded,setExpanded]=useState(null);
-
 const [userLocation,setUserLocation]=useState(null);
 
 useEffect(()=>{
@@ -45,7 +44,7 @@ position.coords.longitude
 
 },
 
-()=>{
+(error)=>{
 
 console.log(
 "Location unavailable"
@@ -130,40 +129,90 @@ accessibility=8;
 
 }
 
-let distance=
-999;
+let distance=999;
+
+const stationLat=
+
+station.latitude
+||
+station.gtfs_latitude
+||
+station.lat;
+
+const stationLng=
+
+station.longitude
+||
+station.gtfs_longitude
+||
+station.lng;
 
 if(
 
 userLocation &&
-
-station.latitude &&
-
-station.longitude
+stationLat &&
+stationLng
 
 ){
 
-distance=
+const R=3958.8;
 
-Math.sqrt(
+const dLat=
+(stationLat-userLocation.lat)
+*Math.PI/180;
 
-Math.pow(
-station.latitude-
-userLocation.lat,
-2
+const dLng=
+(stationLng-userLocation.lng)
+*Math.PI/180;
+
+const a=
+
+Math.sin(
+dLat/2
+)
+*
+Math.sin(
+dLat/2
 )
 
 +
 
-Math.pow(
-station.longitude-
-userLocation.lng,
-2
+Math.cos(
+userLocation.lat
+*Math.PI/180
 )
 
+*
+
+Math.cos(
+stationLat
+*Math.PI/180
 )
 
-*69;
+*
+
+Math.sin(
+dLng/2
+)
+
+*
+
+Math.sin(
+dLng/2
+);
+
+const c=
+
+2*
+Math.atan2(
+Math.sqrt(a),
+Math.sqrt(
+1-a
+)
+);
+
+distance=
+R*c;
 
 }
 
@@ -247,20 +296,6 @@ JSON.stringify(updated)
 
 }
 
-function status(score){
-
-if(score>=80){
-return "🟢 Excellent";
-}
-
-if(score>=60){
-return "🟡 Good";
-}
-
-return "🔴 Weak";
-
-}
-
 const filtered=[...stations]
 
 .filter(station=>{
@@ -293,21 +328,15 @@ return a.distance-b.distance;
 }
 
 if(sortBy==="score"){
-
 return b.score-a.score;
-
 }
 
 if(sortBy==="reliability"){
-
 return b.reliability-a.reliability;
-
 }
 
 if(sortBy==="crowding"){
-
 return a.crowding-b.crowding;
-
 }
 
 return 0;
@@ -329,7 +358,7 @@ color:"white"
 >
 
 <h1>
-🚇 Bloomberg for Transit V26
+🚇 Bloomberg for Transit V27
 </h1>
 
 <input
@@ -350,18 +379,18 @@ marginBottom:"20px"
 style={{
 display:"flex",
 gap:"10px",
-marginBottom:"25px"
+marginBottom:"20px",
+flexWrap:"wrap"
 }}
 >
 
 <select
 value={sortBy}
 onChange={(e)=>
-setSortBy(
-e.target.value
-)
+setSortBy(e.target.value)
 }
 >
+
 <option value="score">
 Best Score
 </option>
@@ -373,13 +402,27 @@ Most Reliable
 <option value="crowding">
 Least Crowded
 </option>
+
+</select>
+
+<select
+value={borough}
+onChange={(e)=>
+setBorough(e.target.value)
+}
+>
+
+<option>All</option>
+<option>M</option>
+<option>Bk</option>
+<option>Q</option>
+<option>Bx</option>
+
 </select>
 
 <button
 onClick={()=>
-setNearMe(
-!nearMe
-)
+setNearMe(!nearMe)
 }
 >
 📍 Near Me
@@ -399,7 +442,7 @@ marginBottom:"20px"
 >
 
 <h2>
-🏆 Top Ranked
+🏆 Top Ranked Station
 </h2>
 
 <h1>
@@ -413,6 +456,11 @@ marginBottom:"20px"
 </div>
 
 )}
+
+<p>
+{filtered.length}
+stations found
+</p>
 
 {filtered.map((station,index)=>(
 
@@ -429,14 +477,13 @@ style={{
 padding:"20px",
 marginBottom:"20px",
 background:"#151c2e",
-borderRadius:"20px"
+borderRadius:"20px",
+cursor:"pointer"
 }}
 >
 
 <h2>
-#{index+1}
-•
-{station.name}
+#{index+1} • {station.name}
 </h2>
 
 <p>
@@ -483,6 +530,11 @@ min
 <p>
 🔁 Transfers:
 {station.transfers}/10
+</p>
+
+<p>
+🚨 Delay:
+{station.delayScore}/10
 </p>
 
 </div>
