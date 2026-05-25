@@ -30,13 +30,15 @@ export default function Home() {
   return (
     <main
       style={{
-        padding: "30px",
-        background: "#111",
+        background: "#0b0f19",
         minHeight: "100vh",
-        color: "white"
+        color: "white",
+        padding: "40px"
       }}
     >
-      <h1>🚇 MTA Station Index V8</h1>
+      <h1 style={{ marginBottom: "20px" }}>
+        🚇 MTA Station Index V8
+      </h1>
 
       <input
         type="text"
@@ -45,11 +47,10 @@ export default function Home() {
         onChange={(e) => setSearch(e.target.value)}
         style={{
           width: "100%",
-          padding: "12px",
-          marginTop: "20px",
-          marginBottom: "30px",
-          borderRadius: "10px",
+          padding: "14px",
+          borderRadius: "12px",
           border: "none",
+          marginBottom: "25px",
           fontSize: "16px"
         }}
       />
@@ -61,19 +62,34 @@ export default function Home() {
           key={index}
           style={{
             border: "1px solid #333",
-            padding: "20px",
-            borderRadius: "15px",
-            marginBottom: "20px",
-            background: "#1e1e1e"
+            padding: "25px",
+            borderRadius: "18px",
+            marginBottom: "25px",
+            background: "#1a1f2e"
           }}
         >
-          <h2>{station.name}</h2>
+          <h2>{index + 1}. {station.name}</h2>
 
-          <p>⭐ Score: {station.score}/100</p>
+          <p>🚉 {station.line}</p>
+          <p>📍 {station.borough}</p>
 
-          <p>📍 Borough: {station.borough}</p>
+          <h3>⭐ {station.score}/100</h3>
 
-          <p>🚉 Line: {station.line}</p>
+          <p>🧠 Reliability: {station.reliability}/10</p>
+          <p>👥 Crowding: {station.crowding}/10</p>
+          <p>♿ Accessibility: {station.accessibility}/10</p>
+          <p>🔁 Transfers: {station.transfers}/10</p>
+          <p>🚨 Delay Score: {station.delay_score}/10</p>
+
+          <p>
+            🛗 Elevator:{" "}
+            {station.elevator ? "Yes" : "No"}
+          </p>
+
+          <p>
+            🕒 Updated:{" "}
+            {station.updated || "N/A"}
+          </p>
         </div>
       ))}
     </main>
