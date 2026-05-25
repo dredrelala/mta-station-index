@@ -10,35 +10,17 @@ const supabase = createClient(
 
 export default function Home() {
   const [stations, setStations] = useState([]);
-  const [homeStation, setHomeStation] = useState("");
-  const [workStation, setWorkStation] = useState("");
-  const [setupComplete, setSetupComplete] = useState(false);
   const [search, setSearch] = useState("");
 
   useEffect(() => {
     loadStations();
-
-    const savedHome =
-      localStorage.getItem("homeStation");
-
-    const savedWork =
-      localStorage.getItem("workStation");
-
-    if (savedHome && savedWork) {
-      setHomeStation(savedHome);
-      setWorkStation(savedWork);
-      setSetupComplete(true);
-    }
   }, []);
 
   async function loadStations() {
-    const { data, error } =
-      await supabase
-        .from("stations")
-        .select("*")
-        .order("score", {
-          ascending: false,
-        });
+    const { data, error } = await supabase
+      .from("stations")
+      .select("*")
+      .order("score", { ascending: false });
 
     if (error) {
       console.log(error);
@@ -48,238 +30,121 @@ export default function Home() {
     setStations(data || []);
   }
 
-  function saveSetup() {
-    if (!homeStation || !workStation) {
-      alert(
-        "Select a home and work station"
-      );
-      return;
-    }
-
-    localStorage.setItem(
-      "homeStation",
-      homeStation
-    );
-
-    localStorage.setItem(
-      "workStation",
-      workStation
-    );
-
-    setSetupComplete(true);
-  }
-
-  const homeData = stations.find(
-    (s) => s.name === homeStation
+  const filteredStations = stations.filter((station) =>
+    station.name?.toLowerCase().includes(search.toLowerCase())
   );
 
-  const nearby = stations
-    .filter((station) =>
-      station.name
-        ?.toLowerCase()
-        .includes(search.toLowerCase())
-    )
-    .slice(0, 8);
-
-  const commuteScore =
-    homeData?.score || 70;
-
-  const scoreColor =
-    commuteScore >= 80
-      ? "#10B981"
-      : commuteScore >= 65
-      ? "#F59E0B"
-      : "#EF4444";
-
-  if (!setupComplete) {
-    return (
-      <main
-        style={{
-          minHeight: "100vh",
-          background:
-            "linear-gradient(to bottom,#050505,#111827)",
-          color: "white",
-          padding: "30px",
-          fontFamily:
-            "-apple-system,BlinkMacSystemFont,sans-serif",
-        }}
-      >
-        <h1
-          style={{
-            fontSize: 42,
-            fontWeight: 800,
-            marginBottom: 10,
-          }}
-        >
-          🚇 Bloomberg for Transit
-        </h1>
-
-        <p
-          style={{
-            opacity: .7,
-            marginBottom: 40,
-          }}
-        >
-          Build your commute profile
-        </p>
-
-        <div
-          style={{
-            background:
-              "rgba(255,255,255,.05)",
-            backdropFilter:
-              "blur(20px)",
-            padding: 30,
-            borderRadius: 30,
-            border:
-              "1px solid rgba(255,255,255,.1)"
-          }}
-        >
-          <h3>🏠 Home Station</h3>
-
-          <select
-            value={homeStation}
-            onChange={(e)=>
-              setHomeStation(
-                e.target.value
-              )
-            }
-            style={inputStyle}
-          >
-            <option value="">
-              Select Home
-            </option>
-
-            {stations.map((station)=>(
-              <option
-                key={station.id}
-                value={station.name}
-              >
-                {station.name}
-              </option>
-            ))}
-          </select>
-
-          <h3>
-            🏢 Work Station
-          </h3>
-
-          <select
-            value={workStation}
-            onChange={(e)=>
-              setWorkStation(
-                e.target.value
-              )
-            }
-            style={inputStyle}
-          >
-            <option value="">
-              Select Work
-            </option>
-
-            {stations.map((station)=>(
-              <option
-                key={station.id}
-                value={station.name}
-              >
-                {station.name}
-              </option>
-            ))}
-          </select>
-
-          <button
-            onClick={saveSetup}
-            style={{
-              width:"100%",
-              padding:18,
-              borderRadius:18,
-              border:"none",
-              background:"#2563EB",
-              color:"white",
-              fontWeight:700,
-              fontSize:18,
-              cursor:"pointer",
-              marginTop:20
-            }}
-          >
-            Continue →
-          </button>
-        </div>
-      </main>
-    );
-  }
+  const topStation = filteredStations[0];
 
   return (
     <main
       style={{
-        minHeight:"100vh",
+        minHeight: "100vh",
         background:
-          "linear-gradient(to bottom,#050505,#111827)",
-        color:"white",
-        padding:"30px",
-        fontFamily:
-          "-apple-system,BlinkMacSystemFont,sans-serif"
+          "linear-gradient(180deg,#0B1020,#111827)",
+        color: "white",
+        padding: "30px",
+        fontFamily: "-apple-system"
       }}
     >
       <h1
         style={{
-          fontSize:38,
-          marginBottom:5
+          fontSize: "52px",
+          fontWeight: "800",
+          marginBottom: "25px"
         }}
       >
-        Good morning 👋
+        🚇 MTA Station Index
       </h1>
 
-      <p
+      <input
+        placeholder="Search station..."
+        value={search}
+        onChange={(e)=>setSearch(e.target.value)}
         style={{
-          opacity:.6,
-          marginBottom:30
+          width:"100%",
+          padding:"18px",
+          borderRadius:"18px",
+          border:"none",
+          fontSize:"16px",
+          marginBottom:"30px"
         }}
-      >
-        Your transit dashboard
-      </p>
+      />
 
-      <div
-        style={{
-          padding:30,
-          borderRadius:35,
-          background:
-          "linear-gradient(135deg,#2563EB,#1E1B4B)",
-          marginBottom:30
-        }}
-      >
-        <p>Today's commute</p>
-
-        <h2>
-          🏠 {homeStation}
-        </h2>
+      {topStation && (
 
         <div
           style={{
-            margin:"10px 0"
+            padding:"35px",
+            borderRadius:"30px",
+            marginBottom:"35px",
+            background:
+            "linear-gradient(135deg,#2563EB,#4F46E5)"
           }}
         >
-          ↓
+          <h3>🏆 Top Ranked Station</h3>
+
+          <h1
+          style={{
+            fontSize:"42px"
+          }}
+          >
+            {topStation.name}
+          </h1>
+
+          <h2>
+            ⭐ {topStation.score}/100
+          </h2>
+
+        </div>
+      )}
+
+      <h3>
+        {filteredStations.length} stations found
+      </h3>
+
+      {filteredStations.map((station,index)=>(
+
+        <div
+        key={station.id}
+        style={{
+          background:"#1F2937",
+          padding:"25px",
+          borderRadius:"25px",
+          marginTop:"20px"
+        }}
+        >
+
+        <h2>
+          #{index+1} {station.name}
+        </h2>
+
+        <p>⭐ Score: {station.score}</p>
+
+        <p>
+        🧠 Reliability:
+        {station.reliability_score || 5}/10
+        </p>
+
+        <p>
+        🧼 Cleanliness:
+        {station.cleanliness || 5}/10
+        </p>
+
+        <p>
+        ♿ Accessibility:
+        {station.accessibility || 5}/10
+        </p>
+
+        <p>
+        🚨 Delay:
+        {station.delay_score || 5}/10
+        </p>
+
         </div>
 
-        <h2>
-          🏢 {workStation}
-        </h2>
+      ))}
 
-        <div
-          style={{
-            marginTop:30
-          }}
-        >
-          <div
-            style={{
-              fontSize:65,
-              fontWeight:800,
-              color:scoreColor
-            }}
-          >
-            {commuteScore}
-          </div>
-
-          <div>
-            Transit
+    </main>
+  );
+}
