@@ -12,18 +12,10 @@ export default function Home(){
 
 const [stations,setStations]=useState([]);
 const [search,setSearch]=useState("");
-const [favorites,setFavorites]=useState([]);
 const [sortBy,setSortBy]=useState("score");
 const [borough,setBorough]=useState("All");
 
 useEffect(()=>{
-
-const saved=
-JSON.parse(
-localStorage.getItem("favorites")
-)||[];
-
-setFavorites(saved);
 
 async function loadStations(){
 
@@ -33,36 +25,18 @@ const {data}=await supabase
 
 const ranked=(data||[]).map((station)=>{
 
-const cleanliness=
-Math.floor(Math.random()*4)+6;
-
-const reliability=
-Math.floor(Math.random()*4)+6;
-
-const crowding=
-Math.floor(Math.random()*10)+1;
+const cleanliness=Math.floor(Math.random()*4)+6;
+const reliability=Math.floor(Math.random()*4)+6;
+const crowding=Math.floor(Math.random()*10)+1;
+const delayScore=Math.floor(Math.random()*10)+1;
 
 const accessibility=
-station.line?.includes("-")
-?9:7;
+station.accessibility ?? 7;
 
 const transfers=
-station.line?.split("-").length+2 || 3;
-
-const delayScore=
-Math.floor(Math.random()*10)+1;
-
-const distance=
-Math.floor(Math.random()*20)+1;
-
-const elevator=
-Math.random()>.35;
-
-const commuteQuality=
-Math.floor(Math.random()*4)+6;
+station.transfers ?? 3;
 
 const score=Math.round(
-
 (
 cleanliness*2+
 reliability*3+
@@ -70,27 +44,17 @@ reliability*3+
 accessibility+
 transfers+
 (11-delayScore)
-)
-/9
-*10
-
+)/9*10
 );
 
 return{
-
 ...station,
 cleanliness,
 reliability,
 crowding,
-accessibility,
-transfers,
 delayScore,
-distance,
-elevator,
-commuteQuality,
-updated:"Today",
-score
-
+score,
+updated:"Today"
 };
 
 });
@@ -109,49 +73,18 @@ loadStations();
 
 function status(score){
 
-if(score>=80){
-return "🟢 Excellent";
-
-}else if(score>=60){
-
-return "🟡 Good";
-
-}
+if(score>=80) return "🟢 Excellent";
+if(score>=60) return "🟡 Good";
 
 return "🔴 Weak";
 
 }
 
-function trend(station){
-
-if(station.delayScore>=8){
-
-return "⬆ Delays increasing";
-
-}
-
-if(station.crowding>=8){
-
-return "⬆ Crowding rising";
-
-}
-
-if(station.reliability>=8){
-
-return "⬇ Reliability improving";
-
-}
-
-return "➡ Stable";
-
-}
-
 const filtered=[...stations]
 
-.filter((station)=>{
+.filter(station=>{
 
 const searchMatch=
-
 station.name
 ?.toLowerCase()
 .includes(
@@ -196,13 +129,13 @@ return(
 style={{
 background:"#0b0f19",
 padding:"40px",
-minHeight:"100vh",
-color:"white"
+color:"white",
+minHeight:"100vh"
 }}
 >
 
 <h1>
-🚇 MTA Station Index V16
+🚇 MTA Station Index V17
 </h1>
 
 <input
@@ -233,19 +166,9 @@ onChange={(e)=>
 setSortBy(e.target.value)
 }
 >
-
-<option value="score">
-Best Score
-</option>
-
-<option value="reliability">
-Most Reliable
-</option>
-
-<option value="crowding">
-Least Crowded
-</option>
-
+<option value="score">Best Score</option>
+<option value="reliability">Most Reliable</option>
+<option value="crowding">Least Crowded</option>
 </select>
 
 <select
@@ -254,13 +177,11 @@ onChange={(e)=>
 setBorough(e.target.value)
 }
 >
-
 <option>All</option>
 <option>M</option>
 <option>Bk</option>
 <option>Q</option>
 <option>Bx</option>
-
 </select>
 
 </div>
@@ -270,38 +191,23 @@ setBorough(e.target.value)
 <div
 style={{
 padding:"25px",
-background:"#1a2038",
+background:"#1b2340",
 borderRadius:"20px",
-marginBottom:"25px"
+marginBottom:"20px"
 }}
 >
 
-<h2>
-🏆 Top Ranked Station
-</h2>
+<h2>🏆 Top Ranked Station</h2>
 
-<h1>
-{topStation.name}
-</h1>
+<h1>{topStation.name}</h1>
 
-<p>
-⭐ {topStation.score}/100
-</p>
-
-<p>
-{status(
-topStation.score
-)}
-</p>
+<p>⭐ {topStation.score}/100</p>
 
 </div>
 
 )}
 
-<p>
-{filtered.length}
-stations found
-</p>
+<p>{filtered.length} stations found</p>
 
 {filtered.map((station,index)=>(
 
@@ -316,93 +222,31 @@ borderRadius:"20px"
 >
 
 <h2>
-#{index+1}
-{" "}
-{station.name}
+#{index+1} {station.name}
 </h2>
 
-<p>
-🚉 Line:
-{station.line}
-</p>
-
-<p>
-📍 Borough:
-{station.borough}
-</p>
-
-<p>
-⭐ Score:
-{station.score}/100
-</p>
-
-<p>
-{status(
-station.score
-)}
-</p>
-
-<p>
-📈 Trend:
-{trend(
-station
-)}
-</p>
+<p>{status(station.score)}</p>
 
 <hr/>
 
-<p>
-🧼 Cleanliness:
-{station.cleanliness}/10
-</p>
+<p>🚉 Line: {station.line || "Unknown"}</p>
+<p>📍 Borough: {station.borough || "Unknown"}</p>
+<p>🏢 Division: {station.division || "Unknown"}</p>
+<p>🆔 Station ID: {station.id || "Unknown"}</p>
 
-<p>
-🧠 Reliability:
-{station.reliability}/10
-</p>
+<hr/>
 
-<p>
-👥 Crowding:
-{station.crowding}/10
-</p>
+<p>⭐ Score: {station.score}/100</p>
+<p>🧼 Cleanliness: {station.cleanliness}/10</p>
+<p>🧠 Reliability: {station.reliability}/10</p>
+<p>👥 Crowding: {station.crowding}/10</p>
+<p>🚨 Delay Score: {station.delayScore}/10</p>
+<p>♿ Accessibility: {station.accessibility || "Unknown"}</p>
+<p>🔁 Transfers: {station.transfers || "Unknown"}</p>
 
-<p>
-♿ Accessibility:
-{station.accessibility}/10
-</p>
+<hr/>
 
-<p>
-🔁 Transfers:
-{station.transfers}/10
-</p>
-
-<p>
-🚨 Delay:
-{station.delayScore}/10
-</p>
-
-<p>
-🛗 Elevator:
-{station.elevator
-?"Available"
-:"Unavailable"}
-</p>
-
-<p>
-🧭 Commute Quality:
-{station.commuteQuality}/10
-</p>
-
-<p>
-📍 Distance:
-{station.distance}
-mins away
-</p>
-
-<p>
-🕒 Updated:
-{station.updated}
-</p>
+<p>🕒 Updated: {station.updated}</p>
 
 </div>
 
