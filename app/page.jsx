@@ -7,91 +7,168 @@ export default function Home() {
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    async function getStations() {
-      try {
-        const res = await fetch("/api/stations");
-        const data = await res.json();
+    async function loadStations() {
+      const res = await fetch("/api/stations");
+      const data = await res.json();
 
-        if (data.success) {
-          setStations(data.stations);
-        }
-      } catch (err) {
-        console.log(err);
+      if (data.success) {
+        setStations(data.stations);
       }
     }
 
-    getStations();
+    loadStations();
   }, []);
 
-  const filteredStations = stations.filter((station) =>
-    station.name?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = stations
+    .filter((station) =>
+      station.name.toLowerCase().includes(
+        search.toLowerCase()
+      )
+    )
+    .sort((a,b)=> b.score-a.score);
+
+  const topStation=filtered[0];
+
+  function scoreColor(score){
+
+    if(score>=80) return "#3ccf4e";
+    if(score>=60) return "#ffd43b";
+    return "#ff4d4d";
+  }
 
   return (
-    <main
-      style={{
-        background: "#0b0f19",
-        minHeight: "100vh",
-        color: "white",
-        padding: "40px"
-      }}
-    >
-      <h1 style={{ marginBottom: "20px" }}>
-        🚇 MTA Station Index V8
-      </h1>
 
-      <input
-        type="text"
-        placeholder="Search station..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        style={{
-          width: "100%",
-          padding: "14px",
-          borderRadius: "12px",
-          border: "none",
-          marginBottom: "25px",
-          fontSize: "16px"
-        }}
-      />
+<main
+style={{
+background:"#0b0f19",
+minHeight:"100vh",
+color:"white",
+padding:"40px"
+}}
+>
 
-      <p>{filteredStations.length} stations found</p>
+<h1
+style={{
+fontSize:"48px",
+marginBottom:"20px"
+}}
+>
+🚇 MTA Station Index V8
+</h1>
 
-      {filteredStations.map((station, index) => (
-        <div
-          key={index}
-          style={{
-            border: "1px solid #333",
-            padding: "25px",
-            borderRadius: "18px",
-            marginBottom: "25px",
-            background: "#1a1f2e"
-          }}
-        >
-          <h2>{index + 1}. {station.name}</h2>
+<input
+placeholder="Search station..."
+value={search}
+onChange={(e)=>setSearch(e.target.value)}
+style={{
+width:"100%",
+padding:"15px",
+fontSize:"18px",
+borderRadius:"12px",
+marginBottom:"30px"
+}}
+/>
 
-          <p>🚉 {station.line}</p>
-          <p>📍 {station.borough}</p>
+{topStation && (
 
-          <h3>⭐ {station.score}/100</h3>
+<div
+style={{
+padding:"20px",
+marginBottom:"30px",
+borderRadius:"20px",
+background:"#1a2033"
+}}
+>
 
-          <p>🧠 Reliability: {station.reliability}/10</p>
-          <p>👥 Crowding: {station.crowding}/10</p>
-          <p>♿ Accessibility: {station.accessibility}/10</p>
-          <p>🔁 Transfers: {station.transfers}/10</p>
-          <p>🚨 Delay Score: {station.delay_score}/10</p>
+<h2>🏆 Top Ranked Station</h2>
 
-          <p>
-            🛗 Elevator:{" "}
-            {station.elevator ? "Yes" : "No"}
-          </p>
+<h1>{topStation.name}</h1>
 
-          <p>
-            🕒 Updated:{" "}
-            {station.updated || "N/A"}
-          </p>
-        </div>
-      ))}
-    </main>
-  );
+<p>
+
+⭐ Score:
+<span
+style={{
+color:scoreColor(topStation.score)
+}}
+>
+
+{topStation.score}/100
+
+</span>
+
+</p>
+
+</div>
+
+)}
+
+<p>{filtered.length} stations found</p>
+
+{filtered.map((station,index)=>(
+
+<div
+key={index}
+style={{
+padding:"20px",
+marginBottom:"20px",
+borderRadius:"20px",
+background:"#151c2e"
+}}
+>
+
+<h2>
+
+{index+1}. {station.name}
+
+</h2>
+
+<p>🚉 {station.line}</p>
+
+<p>📍 {station.borough}</p>
+
+<p>
+
+⭐ Score:
+
+<span
+style={{
+color:scoreColor(station.score)
+}}
+>
+
+{station.score}/100
+
+</span>
+
+</p>
+
+<p>🧠 Reliability: {station.reliability}/10</p>
+
+<p>👥 Crowding: {station.crowding}/10</p>
+
+<p>♿ Accessibility: {station.accessibility}/10</p>
+
+<p>🔁 Transfers: {station.transfers}/10</p>
+
+<p>🚨 Delay Score: {station.delay_score}/10</p>
+
+<p>
+🏢 Elevator:
+{station.elevator ? " Yes":" No"}
+</p>
+
+<p>
+🕒 Updated:
+{station.updated}
+</p>
+
+</div>
+
+))}
+
+</main>
+
+)
+
 }
