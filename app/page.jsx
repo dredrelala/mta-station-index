@@ -4,450 +4,319 @@ import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+ process.env.NEXT_PUBLIC_SUPABASE_URL,
+ process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
-function getDistance(lat1, lon1, lat2, lon2) {
-  const R = 3959; // miles
+function getDistance(lat1, lon1, lat2, lon2){
 
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+ const R=3959;
 
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) ** 2;
+ const dLat=((lat2-lat1)*Math.PI)/180;
+ const dLon=((lon2-lon1)*Math.PI)/180;
 
-  return (
-    R *
-    (2 *
-      Math.atan2(
-        Math.sqrt(a),
-        Math.sqrt(1 - a)
-      ))
-  );
+ const a=
+
+ Math.sin(dLat/2)**2+
+
+ Math.cos(lat1*Math.PI/180)*
+ Math.cos(lat2*Math.PI/180)*
+
+ Math.sin(dLon/2)**2;
+
+ return R*
+ (
+ 2*
+ Math.atan2(
+ Math.sqrt(a),
+ Math.sqrt(1-a)
+ )
+ );
+
 }
 
-export default function Home() {
-  const [stations, setStations] = useState([]);
-  const [loading, setLoading] = useState(true);
+export default function Home(){
 
-  const [userLocation, setUserLocation] = useState(null);
-  const [locationError, setLocationError] = useState("");
+const [stations,setStations]=useState([]);
+const [location,setLocation]=useState(null);
+const [loading,setLoading]=useState(true);
 
-  const [homeStation, setHomeStation] = useState("");
-  const [workStation, setWorkStation] = useState("");
-  const [setupComplete, setSetupComplete] = useState(false);
+useEffect(()=>{
 
-  useEffect(() => {
-    loadStations();
+loadStations();
 
-    try {
-      const savedHome = localStorage.getItem("homeStation");
-      const savedWork = localStorage.getItem("workStation");
+if(navigator.geolocation){
 
-      if (savedHome && savedWork) {
-        setHomeStation(savedHome);
-        setWorkStation(savedWork);
-        setSetupComplete(true);
-      }
-    } catch (err) {
-      console.log(err);
-    }
+navigator.geolocation.getCurrentPosition(
 
-    let watchId;
+(position)=>{
 
-    if (typeof window !== "undefined" && navigator.geolocation) {
-      watchId = navigator.geolocation.watchPosition(
-        (position) => {
-          setUserLocation({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude
-          });
+setLocation({
 
-          setLocationError("");
-        },
-        (error) => {
-          console.log(error);
+latitude:
+position.coords.latitude,
 
-          setLocationError(
-            "Location unavailable"
-          );
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 15000,
-          maximumAge: 0
-        }
-      );
-    } else {
-      setLocationError(
-        "Geolocation not supported"
-      );
-    }
+longitude:
+position.coords.longitude
 
-    return () => {
-      if (
-        watchId &&
-        navigator.geolocation
-      ) {
-        navigator.geolocation.clearWatch(
-          watchId
-        );
-      }
-    };
-  }, []);
+});
 
-  async function loadStations() {
-    try {
-      const { data, error } =
-        await supabase
-          .from("stations")
-          .select("*");
+},
 
-      if (error) {
-        console.log(error);
-        return;
-      }
+(error)=>{
 
-      setStations(data || []);
-    } catch (err) {
-      console.log(err);
-    }
+console.log(error);
 
-    setLoading(false);
-  }
+},
 
-  function saveSetup() {
-    if (
-      !homeStation.trim() ||
-      !workStation.trim()
-    ) {
-      alert(
-        "Please choose both stations"
-      );
-      return;
-    }
+{
+enableHighAccuracy:true
+}
 
-    localStorage.setItem(
-      "homeStation",
-      homeStation
-    );
+);
 
-    localStorage.setItem(
-      "workStation",
-      workStation
-    );
+}
 
-    setSetupComplete(true);
-  }
+},[]);
 
-  const nearby = useMemo(() => {
-    if (
-      !userLocation ||
-      stations.length === 0
-    ) {
-      return [];
-    }
+async function loadStations(){
 
-    return stations
-      .filter((station) => {
-        const lat = parseFloat(
-          station.latitude
-        );
+const {data,error}=await supabase
 
-        const lon = parseFloat(
-          station.longitude
-        );
+.from("stations")
 
-        return (
-          !isNaN(lat) &&
-          !isNaN(lon)
-        );
-      })
+.select("*");
 
-      .map((station) => {
-        const miles =
-          getDistance(
-            userLocation.latitude,
-            userLocation.longitude,
-            parseFloat(
-              station.latitude
-            ),
-            parseFloat(
-              station.longitude
-            )
-          );
+if(error){
 
-        return {
-          ...station,
-          miles,
-          walkingMinutes:
-            Math.max(
-              1,
-              Math.round(
-                miles * 20
-              )
-            )
-        };
-      })
+console.log(error);
 
-      .sort(
-        (a, b) =>
-          a.miles - b.miles
-      )
+return;
 
-      .slice(0, 5);
-  }, [
-    stations,
-    userLocation
-  ]);
+}
 
-  if (loading) {
-    return (
-      <main
-        style={{
-          background: "#050505",
-          color: "white",
-          minHeight: "100vh",
-          padding: "30px"
-        }}
-      >
-        Loading...
-      </main>
-    );
-  }
+setStations(data||[]);
+setLoading(false);
 
-  if (!setupComplete) {
-    return (
-      <main
-        style={{
-          background: "#050505",
-          color: "white",
-          minHeight: "100vh",
-          padding: "30px",
-          fontFamily:
-            "-apple-system"
-        }}
-      >
-        <h1
-          style={{
-            fontSize: 38
-          }}
-        >
-          🚇 Bloomberg for Transit
-        </h1>
+}
 
-        <p
-          style={{
-            opacity: 0.7,
-            marginBottom: 30
-          }}
-        >
-          Build your commute profile
-        </p>
+const nearby=useMemo(()=>{
 
-        <div
-          style={{
-            background: "#111",
-            borderRadius: 30,
-            padding: 25
-          }}
-        >
-          <h2>
-            🏠 Home Station
-          </h2>
+if(
+!location ||
+stations.length===0
+){
 
-          <select
-            value={homeStation}
-            onChange={(e) =>
-              setHomeStation(
-                e.target.value
-              )
-            }
-            style={{
-              width: "100%",
-              padding: 16,
-              marginBottom: 20,
-              borderRadius: 15
-            }}
-          >
-            <option value="">
-              Select station
-            </option>
+return [];
 
-            {stations.map(
-              (station) => (
-                <option
-                  key={
-                    station.id
-                  }
-                  value={
-                    station.name
-                  }
-                >
-                  {station.name}
-                </option>
-              )
-            )}
-          </select>
+}
 
-          <h2>
-            🏢 Work Station
-          </h2>
+return stations
 
-          <select
-            value={workStation}
-            onChange={(e) =>
-              setWorkStation(
-                e.target.value
-              )
-            }
-            style={{
-              width: "100%",
-              padding: 16,
-              marginBottom: 20,
-              borderRadius: 15
-            }}
-          >
-            <option value="">
-              Select station
-            </option>
+.filter(
+station=>
 
-            {stations.map(
-              (station) => (
-                <option
-                  key={
-                    station.id
-                  }
-                  value={
-                    station.name
-                  }
-                >
-                  {station.name}
-                </option>
-              )
-            )}
-          </select>
+station.latitude &&
+station.longitude
+)
 
-          <button
-            onClick={saveSetup}
-            style={{
-              width: "100%",
-              padding: 16,
-              border: "none",
-              borderRadius: 20,
-              background:
-                "#2563EB",
-              color: "white",
-              fontWeight: 700
-            }}
-          >
-            Continue →
-          </button>
-        </div>
-      </main>
-    );
-  }
+.map(
+station=>({
 
-  return (
-    <main
-      style={{
-        background: "#050505",
-        color: "white",
-        minHeight: "100vh",
-        padding: "30px",
-        fontFamily:
-          "-apple-system"
-      }}
-    >
-      <h1>
-        Good morning 👋
-      </h1>
+...station,
 
-      <div
-        style={{
-          padding: 30,
-          borderRadius: 35,
-          marginBottom: 30,
-          background:
-            "linear-gradient(135deg,#2563EB,#1E1B4B)"
-        }}
-      >
-        <p>
-          Your commute
-        </p>
+distance:
 
-        <h2>
-          🏠 {homeStation}
-        </h2>
+getDistance(
 
-        <div
-          style={{
-            margin: "15px 0"
-          }}
-        >
-          ↓
-        </div>
+location.latitude,
 
-        <h2>
-          🏢 {workStation}
-        </h2>
-      </div>
+location.longitude,
 
-      {locationError && (
-        <p>
-          {locationError}
-        </p>
-      )}
+Number(
+station.latitude
+),
 
-      <h2>
-        📍 Nearby Stations
-      </h2>
+Number(
+station.longitude
+)
 
-      {nearby.length === 0 ? (
-        <p>
-          Finding nearby
-          stations...
-        </p>
-      ) : (
-        nearby.map(
-          (station) => (
-            <div
-              key={
-                station.id
-              }
-              style={{
-                background:
-                  "#111",
-                padding: 22,
-                borderRadius: 25,
-                marginBottom: 15
-              }}
-            >
-              <h3>
-                {station.name}
-              </h3>
+)
 
-              <p>
-                📍{" "}
-                {
-                  station.walkingMinutes
-                }{" "}
-                min walk
-              </p>
+})
+)
 
-              <p>
-                ⭐{" "}
-                {station.score ??
-                  50}
-              </p>
-            </div>
-          )
-        )
-      )}
-    </main>
-  );
+.sort(
+(a,b)=>
+
+a.distance-
+b.distance
+)
+
+.slice(0,8);
+
+},[
+stations,
+location
+]);
+
+return(
+
+<main
+
+style={{
+
+background:"#050505",
+
+minHeight:"100vh",
+
+color:"white",
+
+padding:"25px",
+
+fontFamily:"-apple-system"
+
+}}
+
+>
+
+<h1
+
+style={{
+
+fontSize:"38px",
+
+marginBottom:"30px"
+
+}}
+
+>
+
+🚇 Bloomberg for Transit
+
+</h1>
+
+<div
+
+style={{
+
+background:
+"linear-gradient(135deg,#2563EB,#1E1B4B)",
+
+padding:"30px",
+
+borderRadius:"35px",
+
+marginBottom:"35px"
+
+}}
+
+>
+
+<p
+style={{
+opacity:.7
+}}
+>
+
+📍 Your Area
+
+</p>
+
+<h1>
+
+{nearby[0]?.name || "Finding station..."}
+
+</h1>
+
+<p>
+
+{nearby[0]
+
+? `${nearby[0].distance.toFixed(1)} miles away`
+
+: "Getting location..."}
+
+</p>
+
+</div>
+
+<h2>
+
+Nearby Stations
+
+</h2>
+
+<br/>
+
+{loading &&
+
+<p>
+
+Loading...
+
+</p>
+
+}
+
+{nearby.map(
+(station,index)=>(
+
+<div
+
+key={station.id}
+
+style={{
+
+background:"#111",
+
+padding:"22px",
+
+borderRadius:"25px",
+
+marginBottom:"15px"
+
+}}
+
+>
+
+<h2>
+
+#{index+1}
+{" "}
+{station.name}
+
+</h2>
+
+<p>
+
+🚇 {station.line}
+
+</p>
+
+<p>
+
+🏙 {station.borough}
+
+</p>
+
+<p>
+
+📍
+{" "}
+{station.distance.toFixed(2)}
+ miles
+
+</p>
+
+</div>
+
+)
+
+)}
+
+</main>
+
+)
+
 }
