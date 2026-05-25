@@ -3,14 +3,34 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 
-const supabase=createClient(
-process.env.NEXT_PUBLIC_SUPABASE_URL,
-process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+const supabase = createClient(
+ process.env.NEXT_PUBLIC_SUPABASE_URL,
+ process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
+
+function getDistance(lat1, lon1, lat2, lon2) {
+ const R = 3959;
+
+ const dLat=((lat2-lat1)*Math.PI)/180;
+ const dLon=((lon2-lon1)*Math.PI)/180;
+
+ const a=
+ Math.sin(dLat/2)**2+
+ Math.cos((lat1*Math.PI)/180)*
+ Math.cos((lat2*Math.PI)/180)*
+ Math.sin(dLon/2)**2;
+
+ return R*(2*Math.atan2(
+ Math.sqrt(a),
+ Math.sqrt(1-a)
+ ));
+}
 
 export default function Home(){
 
 const [stations,setStations]=useState([]);
+const [userLocation,setUserLocation]=useState(null);
+
 const [homeStation,setHomeStation]=useState("");
 const [workStation,setWorkStation]=useState("");
 const [setupComplete,setSetupComplete]=useState(false);
@@ -34,6 +54,29 @@ setSetupComplete(true);
 
 }
 
+navigator.geolocation.getCurrentPosition(
+
+(position)=>{
+
+setUserLocation({
+latitude:position.coords.latitude,
+longitude:position.coords.longitude
+});
+
+},
+
+(error)=>{
+console.log(error);
+},
+
+{
+enableHighAccuracy:true,
+timeout:15000,
+maximumAge:0
+}
+
+);
+
 },[]);
 
 async function loadStations(){
@@ -56,11 +99,9 @@ setStations(data||[]);
 
 function saveSetup(){
 
-if(!homeStation || !workStation){
+if(!homeStation||!workStation){
 
-alert(
-"Choose both stations"
-);
+alert("Choose both stations");
 
 return;
 
@@ -80,8 +121,45 @@ setSetupComplete(true);
 
 }
 
-const nearby=
-stations.slice(0,5);
+const nearby=[...stations]
+.map(station=>{
+
+let distance=null;
+
+if(
+userLocation &&
+station.latitude &&
+station.longitude
+){
+
+distance=getDistance(
+userLocation.latitude,
+userLocation.longitude,
+Number(station.latitude),
+Number(station.longitude)
+);
+
+}
+
+return{
+
+...station,
+distance
+
+};
+
+})
+
+.filter(
+station=>station.distance!==null
+)
+
+.sort(
+(a,b)=>
+a.distance-b.distance
+)
+
+.slice(0,5);
 
 if(!setupComplete){
 
@@ -123,9 +201,7 @@ borderRadius:"30px"
 }}
 >
 
-<h2>
-🏠 Home Station
-</h2>
+<h2>🏠 Home Station</h2>
 
 <select
 value={homeStation}
@@ -137,7 +213,6 @@ e.target.value
 style={{
 width:"100%",
 padding:"16px",
-marginTop:"10px",
 marginBottom:"25px",
 borderRadius:"18px"
 }}
@@ -162,9 +237,7 @@ value={station.name}
 
 </select>
 
-<h2>
-🏢 Work Station
-</h2>
+<h2>🏢 Work Station</h2>
 
 <select
 value={workStation}
@@ -176,7 +249,6 @@ e.target.value
 style={{
 width:"100%",
 padding:"16px",
-marginTop:"10px",
 marginBottom:"25px",
 borderRadius:"18px"
 }}
@@ -214,9 +286,7 @@ background:"#2563EB",
 color:"white"
 }}
 >
-
 Continue →
-
 </button>
 
 </div>
@@ -253,57 +323,18 @@ marginBottom:"30px"
 }}
 >
 
-<p>
-Your commute today
-</p>
+<p>Your commute today</p>
 
-<h2>
-🏠 {homeStation}
-</h2>
+<h2>🏠 {homeStation}</h2>
 
 ↓
 
-<h2>
-🏢 {workStation}
-</h2>
-
-<h1
-style={{
-marginTop:"20px",
-fontSize:"55px"
-}}
->
-88
-</h1>
-
-<p>
-Transit Score
-</p>
-
-<div
-style={{
-marginTop:"25px"
-}}
->
-
-<p>
-🟢 On time
-</p>
-
-<p>
-🟡 Moderate crowding
-</p>
-
-<p>
-🔴 Minor delays
-</p>
-
-</div>
+<h2>🏢 {workStation}</h2>
 
 </div>
 
 <h2>
-Nearby
+📍 Nearby Stations
 </h2>
 
 {nearby.map((station)=>(
@@ -321,6 +352,11 @@ marginBottom:"15px"
 <h3>
 {station.name}
 </h3>
+
+<p>
+📍 {station.distance.toFixed(1)}
+ miles away
+</p>
 
 <p>
 ⭐ {station.score||50}
