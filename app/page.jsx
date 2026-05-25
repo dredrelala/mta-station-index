@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 
-const supabase = createClient(
+const supabase=createClient(
 process.env.NEXT_PUBLIC_SUPABASE_URL,
 process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
@@ -15,6 +15,7 @@ const [search,setSearch]=useState("");
 const [favorites,setFavorites]=useState([]);
 const [sortBy,setSortBy]=useState("score");
 const [borough,setBorough]=useState("All");
+const [nearMe,setNearMe]=useState(false);
 
 useEffect(()=>{
 
@@ -187,6 +188,10 @@ return matchesSearch
 
 .sort((a,b)=>{
 
+if(nearMe){
+return a.distance-b.distance;
+}
+
 if(sortBy==="score"){
 return b.score-a.score;
 }
@@ -197,10 +202,6 @@ return b.reliability-a.reliability;
 
 if(sortBy==="crowding"){
 return a.crowding-b.crowding;
-}
-
-if(sortBy==="distance"){
-return a.distance-b.distance;
 }
 
 return 0;
@@ -222,7 +223,7 @@ color:"white"
 >
 
 <h1>
-🚇 MTA Station Index V14
+🚇 MTA Station Index V15
 </h1>
 
 <input
@@ -235,7 +236,7 @@ style={{
 width:"100%",
 padding:"15px",
 borderRadius:"15px",
-marginBottom:"15px"
+marginBottom:"20px"
 }}
 />
 
@@ -267,10 +268,6 @@ Most Reliable
 Least Crowded
 </option>
 
-<option value="distance">
-Closest
-</option>
-
 </select>
 
 <select
@@ -287,6 +284,16 @@ setBorough(e.target.value)
 <option>Bx</option>
 
 </select>
+
+<button
+onClick={()=>
+setNearMe(
+!nearMe
+)
+}
+>
+📍 Near Me
+</button>
 
 </div>
 
@@ -314,9 +321,7 @@ marginBottom:"20px"
 </p>
 
 <p>
-{status(
-topStation.score
-)}
+{status(topStation.score)}
 </p>
 
 </div>
@@ -368,64 +373,20 @@ Favorite
 <p>🚉 {station.line}</p>
 <p>📍 {station.borough}</p>
 
-<p>
-⭐ Score:
-{station.score}/100
-</p>
+<p>⭐ {station.score}/100</p>
 
-<p>
-{status(
-station.score
-)}
-</p>
+<p>{status(station.score)}</p>
 
-<p>
-📈 Trend:
-{trend(
-station
-)}
-</p>
+<p>📈 {trend(station)}</p>
 
-<p>
-🧼 Cleanliness:
-{station.cleanliness}/10
-</p>
-
-<p>
-🧠 Reliability:
-{station.reliability}/10
-</p>
-
-<p>
-👥 Crowding:
-{station.crowding}/10
-</p>
-
-<p>
-♿ Accessibility:
-{station.accessibility}/10
-</p>
-
-<p>
-🔁 Transfers:
-{station.transfers}/10
-</p>
-
-<p>
-🚨 Delay Score:
-{station.delayScore}/10
-</p>
-
-<p>
-🕒 Updated:
-{station.updated}
-</p>
-
-<p>
-📍 Distance:
-{station.distance}
-mins away
-</p>
+<p>🧼 Cleanliness: {station.cleanliness}/10</p>
+<p>🧠 Reliability: {station.reliability}/10</p>
+<p>👥 Crowding: {station.crowding}/10</p>
+<p>♿ Accessibility: {station.accessibility}/10</p>
+<p>🔁 Transfers: {station.transfers}/10</p>
+<p>🚨 Delay Score: {station.delayScore}/10</p>
+<p>🕒 Updated: {station.updated}</p>
+<p>📍 {station.distance} mins away</p>
 
 </div>
 
