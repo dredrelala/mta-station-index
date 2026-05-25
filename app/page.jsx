@@ -8,67 +8,57 @@ process.env.NEXT_PUBLIC_SUPABASE_URL,
 process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
-export default function Home() {
+export default function Home(){
 
-const [stations,setStations] = useState([]);
-const [search,setSearch] = useState("");
+const [stations,setStations]=useState([]);
+const [search,setSearch]=useState("");
+const [sortBy,setSortBy]=useState("score");
 
-useEffect(() => {
+useEffect(()=>{
 
 async function loadStations(){
 
-const { data } = await supabase
+const {data}=await supabase
 .from("stations")
 .select("*");
 
-const ranked = (data || []).map((station)=>{
+const ranked=(data||[]).map((station)=>{
 
-const cleanliness = Math.floor(Math.random()*4)+6;
-const reliability = Math.floor(Math.random()*4)+6;
-const busyness = Math.floor(Math.random()*10)+1;
+const cleanliness=Math.floor(Math.random()*4)+6;
+const reliability=Math.floor(Math.random()*4)+6;
+const busyness=Math.floor(Math.random()*10)+1;
 
-const accessibility =
+const accessibility=
 station.line?.includes("-")
 ? 9
-: Math.floor(Math.random()*10)+1;
+: 7;
 
-const transfers =
+const transfers=
 station.line?.split("-").length+2 || 3;
 
-const delayScore =
-11 - reliability;
-
-const score = Math.round(
+const score=Math.round(
 
 (
-cleanliness*1.5 +
-reliability*2 +
-(11-busyness) +
-accessibility +
-transfers +
-delayScore
-)
-/7
-*10
+cleanliness*2+
+reliability*3+
+(11-busyness)*2+
+accessibility+
+transfers
+)/8*10
 
 );
 
-return {
-
+return{
 ...station,
-
+score,
 cleanliness,
 reliability,
 busyness,
 accessibility,
-transfers,
-score
-
+transfers
 };
 
 });
-
-ranked.sort((a,b)=>b.score-a.score);
 
 setStations(ranked);
 
@@ -78,13 +68,48 @@ loadStations();
 
 },[]);
 
-const filtered = stations.filter((station)=>
+const filtered=[...stations]
+.filter(station=>
+
 station.name
 ?.toLowerCase()
 .includes(search.toLowerCase())
-);
 
-const topStation = filtered[0];
+)
+
+.sort((a,b)=>{
+
+if(sortBy==="score"){
+return b.score-a.score;
+}
+
+if(sortBy==="reliability"){
+return b.reliability-a.reliability;
+}
+
+if(sortBy==="crowding"){
+return a.busyness-b.busyness;
+}
+
+return 0;
+
+});
+
+const topStation=filtered[0];
+
+function badge(score){
+
+if(score>=80){
+return "🟢 Excellent";
+}
+
+if(score>=60){
+return "🟡 Good";
+}
+
+return "🔴 Needs Improvement";
+
+}
 
 return(
 
@@ -92,20 +117,12 @@ return(
 style={{
 background:"#0b0f19",
 minHeight:"100vh",
-color:"white",
 padding:"40px",
-fontFamily:"Georgia"
+color:"white"
 }}
 >
 
-<h1
-style={{
-fontSize:"60px",
-marginBottom:"20px"
-}}
->
-🚇 MTA Station Index V8
-</h1>
+<h1>🚇 MTA Station Index V9</h1>
 
 <input
 placeholder="Search station..."
@@ -113,22 +130,44 @@ value={search}
 onChange={(e)=>setSearch(e.target.value)}
 style={{
 width:"100%",
-padding:"18px",
+padding:"15px",
 borderRadius:"15px",
-fontSize:"18px",
-marginBottom:"25px"
+marginBottom:"20px"
 }}
 />
+
+<select
+value={sortBy}
+onChange={(e)=>setSortBy(e.target.value)}
+style={{
+padding:"15px",
+borderRadius:"15px",
+marginBottom:"30px"
+}}
+>
+
+<option value="score">
+Best Score
+</option>
+
+<option value="reliability">
+Most Reliable
+</option>
+
+<option value="crowding">
+Least Crowded
+</option>
+
+</select>
 
 {topStation && (
 
 <div
 style={{
-padding:"25px",
-border:"1px solid #333",
+background:"#1a2038",
+padding:"20px",
 borderRadius:"20px",
-marginBottom:"30px",
-background:"#1b2340"
+marginBottom:"30px"
 }}
 >
 
@@ -136,12 +175,7 @@ background:"#1b2340"
 
 <h1>{topStation.name}</h1>
 
-<h3>
-⭐ Score:
-<span style={{color:"#59ff90"}}>
-{topStation.score}/100
-</span>
-</h3>
+<h3>{badge(topStation.score)}</h3>
 
 </div>
 
@@ -154,34 +188,25 @@ background:"#1b2340"
 <div
 key={index}
 style={{
-padding:"30px",
+padding:"20px",
 marginBottom:"20px",
-border:"1px solid #333",
 borderRadius:"20px",
 background:"#1b1b1b"
 }}
 >
 
 <h2>
-{index+1}. {station.name}
+#{index+1} {station.name}
 </h2>
 
-<p>🚉 {station.line}</p>
+<p>⭐ {station.score}/100</p>
 
-<p>📍 {station.borough}</p>
-
-<h2>
-⭐ {station.score}/100
-</h2>
+<p>{badge(station.score)}</p>
 
 <p>🧼 Cleanliness: {station.cleanliness}/10</p>
-
 <p>🧠 Reliability: {station.reliability}/10</p>
-
 <p>👥 Crowding: {station.busyness}/10</p>
-
 <p>♿ Accessibility: {station.accessibility}/10</p>
-
 <p>🔁 Transfers: {station.transfers}/10</p>
 
 </div>
@@ -190,6 +215,6 @@ background:"#1b1b1b"
 
 </main>
 
-);
+)
 
 }
