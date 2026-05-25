@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect,useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 
-const supabase = createClient(
+const supabase=createClient(
 process.env.NEXT_PUBLIC_SUPABASE_URL,
 process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
@@ -15,16 +15,15 @@ const [search,setSearch]=useState("");
 const [favorites,setFavorites]=useState([]);
 const [borough,setBorough]=useState("All");
 const [sortBy,setSortBy]=useState("score");
-const [location,setLocation]=useState(null);
 
 useEffect(()=>{
 
-const savedFavorites=
+const saved=
 JSON.parse(
 localStorage.getItem("favorites")
 )||[];
 
-setFavorites(savedFavorites);
+setFavorites(saved);
 
 async function loadStations(){
 
@@ -51,8 +50,14 @@ station.line?.includes("-")
 const transfers=
 station.line?.split("-").length+2 || 3;
 
+const delayScore=
+Math.floor(Math.random()*10)+1;
+
 const distance=
 Math.floor(Math.random()*20)+1;
+
+const elevator=
+Math.random()>.3;
 
 const score=Math.round(
 
@@ -61,9 +66,10 @@ cleanliness*2+
 reliability*3+
 (11-crowding)*2+
 accessibility+
-transfers
+transfers+
+(11-delayScore)
 )
-/8
+/9
 *10
 
 );
@@ -76,7 +82,10 @@ reliability,
 crowding,
 accessibility,
 transfers,
+delayScore,
 distance,
+elevator,
+updated:"Today",
 score
 
 };
@@ -94,25 +103,6 @@ ranked.sort(
 loadStations();
 
 },[]);
-
-function getLocation(){
-
-navigator.geolocation.getCurrentPosition(
-
-(position)=>{
-
-setLocation({
-
-lat:position.coords.latitude,
-lng:position.coords.longitude
-
-});
-
-}
-
-);
-
-}
 
 function toggleFavorite(name){
 
@@ -156,28 +146,28 @@ return "🟡 Good";
 }
 
 return "🔴 Weak";
+
 }
 
 const filtered=[...stations]
 
 .filter((station)=>{
 
-const matchesSearch=
-
+const searchMatch=
 station.name
 ?.toLowerCase()
 .includes(
 search.toLowerCase()
 );
 
-const matchesBorough=
+const boroughMatch=
 
 borough==="All"
 ?true
 :station.borough===borough;
 
-return matchesSearch
-&& matchesBorough;
+return searchMatch
+&& boroughMatch;
 
 })
 
@@ -218,7 +208,7 @@ color:"white"
 >
 
 <h1>
-🚇 MTA Station Index V12
+🚇 MTA Station Index V13
 </h1>
 
 <input
@@ -250,23 +240,10 @@ onChange={(e)=>
 setSortBy(e.target.value)
 }
 >
-
-<option value="score">
-Best Score
-</option>
-
-<option value="reliability">
-Most Reliable
-</option>
-
-<option value="crowding">
-Least Crowded
-</option>
-
-<option value="distance">
-Closest
-</option>
-
+<option value="score">Best Score</option>
+<option value="reliability">Most Reliable</option>
+<option value="crowding">Least Crowded</option>
+<option value="distance">Closest</option>
 </select>
 
 <select
@@ -275,22 +252,12 @@ onChange={(e)=>
 setBorough(e.target.value)
 }
 >
-
 <option>All</option>
 <option>M</option>
 <option>Bk</option>
 <option>Q</option>
 <option>Bx</option>
-
 </select>
-
-<button
-onClick={getLocation}
->
-
-📍 Near Me
-
-</button>
 
 </div>
 
@@ -298,37 +265,23 @@ onClick={getLocation}
 
 <div
 style={{
-background:"#1a2038",
 padding:"20px",
+background:"#1a2038",
 borderRadius:"20px",
 marginBottom:"20px"
 }}
 >
 
-<h2>
-🏆 Top Station
-</h2>
-
-<h1>
-{topStation.name}
-</h1>
-
-<p>
-⭐ {topStation.score}/100
-</p>
-
-<p>
-{badge(topStation.score)}
-</p>
+<h2>🏆 Top Station</h2>
+<h1>{topStation.name}</h1>
+<p>⭐ {topStation.score}/100</p>
+<p>{badge(topStation.score)}</p>
 
 </div>
 
 )}
 
-<p>
-{filtered.length}
-stations found
-</p>
+<p>{filtered.length} stations found</p>
 
 {filtered.map((station,index)=>(
 
@@ -343,17 +296,10 @@ borderRadius:"20px"
 >
 
 <h2>
-
 {favorites.includes(
 station.name
 )
-?"⭐":"☆"}
-
-{" "}
-
-{index+1}.
-{station.name}
-
+?"⭐":"☆"} {index+1}. {station.name}
 </h2>
 
 <button
@@ -363,49 +309,24 @@ station.name
 )
 }
 >
-
 Favorite
-
 </button>
 
-<p>🚉 {station.line}</p>
+<p>🚉 Line: {station.line}</p>
+<p>📍 Borough: {station.borough}</p>
 
-<p>📍 {station.borough}</p>
+<p>⭐ Score: {station.score}/100</p>
+<p>{badge(station.score)}</p>
 
-<p>
-⭐ {station.score}/100
-</p>
-
-<p>
-{badge(
-station.score
-)}
-</p>
-
-<p>
-🧼 {station.cleanliness}/10
-</p>
-
-<p>
-🧠 {station.reliability}/10
-</p>
-
-<p>
-👥 {station.crowding}/10
-</p>
-
-<p>
-♿ {station.accessibility}/10
-</p>
-
-<p>
-🔁 {station.transfers}/10
-</p>
-
-<p>
-📍 {station.distance}
-mins away
-</p>
+<p>🧼 Cleanliness: {station.cleanliness}/10</p>
+<p>🧠 Reliability: {station.reliability}/10</p>
+<p>👥 Crowding: {station.crowding}/10</p>
+<p>♿ Accessibility: {station.accessibility}/10</p>
+<p>🔁 Transfers: {station.transfers}/10</p>
+<p>🚨 Delay Score: {station.delayScore}/10</p>
+<p>🛗 Elevator: {station.elevator ? "Yes":"No"}</p>
+<p>🕒 Updated: {station.updated}</p>
+<p>📍 Distance: {station.distance} mins away</p>
 
 </div>
 
