@@ -7,80 +7,75 @@ export default function Home() {
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    async function loadStations() {
-      const res = await fetch("/api/stations");
-      const data = await res.json();
+    async function getStations() {
+      try {
+        const res = await fetch("/api/stations");
+        const data = await res.json();
 
-      if (data.success) {
-        setStations(data.stations);
+        if (data.success) {
+          setStations(data.stations);
+        }
+      } catch (err) {
+        console.log(err);
       }
     }
 
-    loadStations();
+    getStations();
   }, []);
 
-  const filtered = stations.filter((station) =>
-    station.name?.toLowerCase().includes(
-      search.toLowerCase()
-    )
+  const filteredStations = stations.filter((station) =>
+    station.name?.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
     <main
       style={{
-        background:"#0b0f19",
-        minHeight:"100vh",
-        color:"white",
-        padding:"40px"
+        padding: "30px",
+        background: "#111",
+        minHeight: "100vh",
+        color: "white"
       }}
     >
-
-      <h1>
-        🚇 MTA Station Index V8
-      </h1>
+      <h1>🚇 MTA Station Index V8</h1>
 
       <input
         type="text"
         placeholder="Search station..."
         value={search}
-        onChange={(e)=>setSearch(e.target.value)}
+        onChange={(e) => setSearch(e.target.value)}
         style={{
-          width:"300px",
-          padding:"12px",
-          borderRadius:"10px",
-          marginTop:"20px",
-          marginBottom:"20px"
+          width: "100%",
+          padding: "12px",
+          marginTop: "20px",
+          marginBottom: "30px",
+          borderRadius: "10px",
+          border: "none",
+          fontSize: "16px"
         }}
       />
 
-      <p>{filtered.length} stations found</p>
+      <p>{filteredStations.length} stations found</p>
 
-      {filtered.map((station,index)=>(
-
+      {filteredStations.map((station, index) => (
         <div
           key={index}
           style={{
-            padding:"20px",
-            marginBottom:"20px",
-            border:"1px solid gray",
-            borderRadius:"20px"
+            border: "1px solid #333",
+            padding: "20px",
+            borderRadius: "15px",
+            marginBottom: "20px",
+            background: "#1e1e1e"
           }}
         >
+          <h2>{station.name}</h2>
 
-          <h2>
-            #{index+1} {station.name}
-          </h2>
+          <p>⭐ Score: {station.score}/100</p>
 
-          <p>🚉 {station.line}</p>
+          <p>📍 Borough: {station.borough}</p>
 
-          <p>📍 {station.borough}</p>
-
-          <p>⭐ {station.score || 50}/100</p>
-
+          <p>🚉 Line: {station.line}</p>
         </div>
-
       ))}
-
     </main>
   );
 }
