@@ -31,22 +31,38 @@ export default function Home() {
   useEffect(() => {
     loadStations();
 
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setUserLocation({
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude
-        });
-      },
-      (error) => {
-        console.log(error);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0
+    let watchId;
+
+    if (navigator.geolocation) {
+      watchId = navigator.geolocation.watchPosition(
+        (position) => {
+          setUserLocation({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+          });
+
+          console.log(
+            "Live location:",
+            position.coords.latitude,
+            position.coords.longitude
+          );
+        },
+        (error) => {
+          console.log("Location error:", error);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 15000,
+          maximumAge: 0
+        }
+      );
+    }
+
+    return () => {
+      if (watchId) {
+        navigator.geolocation.clearWatch(watchId);
       }
-    );
+    };
   }, []);
 
   async function loadStations() {
@@ -63,14 +79,14 @@ export default function Home() {
   }
 
   let processedStations = stations.map((station) => {
-    let distanceMiles = null;
+    let miles = null;
 
     if (
       userLocation &&
       station.latitude != null &&
       station.longitude != null
     ) {
-      distanceMiles = getDistance(
+      miles = getDistance(
         userLocation.latitude,
         userLocation.longitude,
         parseFloat(station.latitude),
@@ -80,10 +96,10 @@ export default function Home() {
 
     return {
       ...station,
-      distanceMiles,
+      miles,
       walkingMinutes:
-        distanceMiles != null
-          ? Math.max(1, Math.round(distanceMiles * 20))
+        miles != null
+          ? Math.max(1, Math.round(miles * 20))
           : null
     };
   });
@@ -97,10 +113,10 @@ export default function Home() {
   }
 
   processedStations.sort((a, b) => {
-    if (a.distanceMiles == null) return 1;
-    if (b.distanceMiles == null) return -1;
+    if (a.miles == null) return 1;
+    if (b.miles == null) return -1;
 
-    return a.distanceMiles - b.distanceMiles;
+    return a.miles - b.miles;
   });
 
   const nearestStation = processedStations[0];
@@ -114,9 +130,7 @@ export default function Home() {
         padding: "30px"
       }}
     >
-      <h1>🚇 Bloomberg for Transit V27</h1>
-
-      <br />
+      <h1>🚇 Bloomberg for Transit</h1>
 
       <input
         placeholder="Search station..."
@@ -133,57 +147,50 @@ export default function Home() {
       {nearestStation && (
         <div
           style={{
-            padding: "20px",
-            borderRadius: "20px",
-            background: "#1b2d72",
-            marginBottom: "30px"
+            background:"#1b2d72",
+            padding:"20px",
+            borderRadius:"20px",
+            marginBottom:"30px"
           }}
         >
           <h2>📍 Nearest Station</h2>
-
           <h1>{nearestStation.name}</h1>
-
-          <h2>
-            {nearestStation.walkingMinutes} mins away
-          </h2>
+          <h3>
+            {nearestStation.walkingMinutes ?? "?"}
+            {" "}mins away
+          </h3>
         </div>
       )}
 
       <p>{processedStations.length} stations found</p>
 
-      <br />
-
-      {processedStations.map((station, index) => (
+      {processedStations.map((station,index)=>(
         <div
           key={station.id}
           style={{
-            padding: "20px",
-            marginBottom: "20px",
-            borderBottom: "1px solid #333"
+            padding:"20px",
+            marginBottom:"20px",
+            borderBottom:"1px solid #333"
           }}
         >
           <h2>
-            #{index + 1} • {station.name}
+            #{index+1} • {station.name}
           </h2>
 
           <p>⭐ {station.score || 50}/100</p>
 
-          <p>🟢 Good Service</p>
-
           <p>
-            📍 {station.walkingMinutes != null
+            📍 {
+              station.walkingMinutes != null
               ? `${station.walkingMinutes} mins away`
-              : "Finding location..."}
+              : "Finding location..."
+            }
           </p>
 
           <p>🧼 Cleanliness: {station.cleanliness || 9}/10</p>
-
           <p>🧠 Reliability: {station.reliability || 9}/10</p>
-
           <p>♿ Accessibility: {station.accessibility || 8}/10</p>
-
           <p>🔁 Transfers: {station.transfers || 4}/10</p>
-
           <p>🚨 Delay: {station.delay || 3}/10</p>
         </div>
       ))}
