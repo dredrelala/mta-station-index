@@ -1,322 +1,285 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
- process.env.NEXT_PUBLIC_SUPABASE_URL,
- process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
-function getDistance(lat1, lon1, lat2, lon2){
-
- const R=3959;
-
- const dLat=((lat2-lat1)*Math.PI)/180;
- const dLon=((lon2-lon1)*Math.PI)/180;
-
- const a=
-
- Math.sin(dLat/2)**2+
-
- Math.cos(lat1*Math.PI/180)*
- Math.cos(lat2*Math.PI/180)*
-
- Math.sin(dLon/2)**2;
-
- return R*
- (
- 2*
- Math.atan2(
- Math.sqrt(a),
- Math.sqrt(1-a)
- )
- );
-
-}
-
-export default function Home(){
-
-const [stations,setStations]=useState([]);
-const [location,setLocation]=useState(null);
-const [loading,setLoading]=useState(true);
-
-useEffect(()=>{
-
-loadStations();
-
-if(navigator.geolocation){
-
-navigator.geolocation.getCurrentPosition(
-
-(position)=>{
-
-setLocation({
-
-latitude:
-position.coords.latitude,
-
-longitude:
-position.coords.longitude
-
-});
-
-},
-
-(error)=>{
-
-console.log(error);
-
-},
-
-{
-enableHighAccuracy:true
-}
-
-);
-
-}
-
-},[]);
-
-async function loadStations(){
-
-const {data,error}=await supabase
-
-.from("stations")
-
-.select("*");
-
-if(error){
-
-console.log(error);
-
-return;
-
-}
-
-setStations(data||[]);
-setLoading(false);
-
-}
-
-const nearby=useMemo(()=>{
-
-if(
-!location ||
-stations.length===0
-){
-
-return [];
-
-}
-
-return stations
-
-.filter(
-station=>
-
-station.latitude &&
-station.longitude
-)
-
-.map(
-station=>({
-
-...station,
-
-distance:
-
-getDistance(
-
-location.latitude,
-
-location.longitude,
-
-Number(
-station.latitude
-),
-
-Number(
-station.longitude
-)
-
-)
-
-})
-)
-
-.sort(
-(a,b)=>
-
-a.distance-
-b.distance
-)
-
-.slice(0,8);
-
-},[
-stations,
-location
-]);
-
-return(
-
-<main
-
-style={{
-
-background:"#050505",
-
-minHeight:"100vh",
-
-color:"white",
-
-padding:"25px",
-
-fontFamily:"-apple-system"
-
-}}
-
->
-
-<h1
-
-style={{
-
-fontSize:"38px",
-
-marginBottom:"30px"
-
-}}
-
->
-
-🚇 Bloomberg for Transit
-
-</h1>
-
-<div
-
-style={{
-
-background:
-"linear-gradient(135deg,#2563EB,#1E1B4B)",
-
-padding:"30px",
-
-borderRadius:"35px",
-
-marginBottom:"35px"
-
-}}
-
->
-
-<p
-style={{
-opacity:.7
-}}
->
-
-📍 Your Area
-
-</p>
-
-<h1>
-
-{nearby[0]?.name || "Finding station..."}
-
-</h1>
-
-<p>
-
-{nearby[0]
-
-? `${nearby[0].distance.toFixed(1)} miles away`
-
-: "Getting location..."}
-
-</p>
-
-</div>
-
-<h2>
-
-Nearby Stations
-
-</h2>
-
-<br/>
-
-{loading &&
-
-<p>
-
-Loading...
-
-</p>
-
-}
-
-{nearby.map(
-(station,index)=>(
-
-<div
-
-key={station.id}
-
-style={{
-
-background:"#111",
-
-padding:"22px",
-
-borderRadius:"25px",
-
-marginBottom:"15px"
-
-}}
-
->
-
-<h2>
-
-#{index+1}
-{" "}
-{station.name}
-
-</h2>
-
-<p>
-
-🚇 {station.line}
-
-</p>
-
-<p>
-
-🏙 {station.borough}
-
-</p>
-
-<p>
-
-📍
-{" "}
-{station.distance.toFixed(2)}
- miles
-
-</p>
-
-</div>
-
-)
-
-)}
-
-</main>
-
-)
-
-}
+export default function Home() {
+  const [stations, setStations] = useState([]);
+  const [homeStation, setHomeStation] = useState("");
+  const [workStation, setWorkStation] = useState("");
+  const [setupComplete, setSetupComplete] = useState(false);
+  const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    loadStations();
+
+    const savedHome =
+      localStorage.getItem("homeStation");
+
+    const savedWork =
+      localStorage.getItem("workStation");
+
+    if (savedHome && savedWork) {
+      setHomeStation(savedHome);
+      setWorkStation(savedWork);
+      setSetupComplete(true);
+    }
+  }, []);
+
+  async function loadStations() {
+    const { data, error } =
+      await supabase
+        .from("stations")
+        .select("*")
+        .order("score", {
+          ascending: false,
+        });
+
+    if (error) {
+      console.log(error);
+      return;
+    }
+
+    setStations(data || []);
+  }
+
+  function saveSetup() {
+    if (!homeStation || !workStation) {
+      alert(
+        "Select a home and work station"
+      );
+      return;
+    }
+
+    localStorage.setItem(
+      "homeStation",
+      homeStation
+    );
+
+    localStorage.setItem(
+      "workStation",
+      workStation
+    );
+
+    setSetupComplete(true);
+  }
+
+  const homeData = stations.find(
+    (s) => s.name === homeStation
+  );
+
+  const nearby = stations
+    .filter((station) =>
+      station.name
+        ?.toLowerCase()
+        .includes(search.toLowerCase())
+    )
+    .slice(0, 8);
+
+  const commuteScore =
+    homeData?.score || 70;
+
+  const scoreColor =
+    commuteScore >= 80
+      ? "#10B981"
+      : commuteScore >= 65
+      ? "#F59E0B"
+      : "#EF4444";
+
+  if (!setupComplete) {
+    return (
+      <main
+        style={{
+          minHeight: "100vh",
+          background:
+            "linear-gradient(to bottom,#050505,#111827)",
+          color: "white",
+          padding: "30px",
+          fontFamily:
+            "-apple-system,BlinkMacSystemFont,sans-serif",
+        }}
+      >
+        <h1
+          style={{
+            fontSize: 42,
+            fontWeight: 800,
+            marginBottom: 10,
+          }}
+        >
+          🚇 Bloomberg for Transit
+        </h1>
+
+        <p
+          style={{
+            opacity: .7,
+            marginBottom: 40,
+          }}
+        >
+          Build your commute profile
+        </p>
+
+        <div
+          style={{
+            background:
+              "rgba(255,255,255,.05)",
+            backdropFilter:
+              "blur(20px)",
+            padding: 30,
+            borderRadius: 30,
+            border:
+              "1px solid rgba(255,255,255,.1)"
+          }}
+        >
+          <h3>🏠 Home Station</h3>
+
+          <select
+            value={homeStation}
+            onChange={(e)=>
+              setHomeStation(
+                e.target.value
+              )
+            }
+            style={inputStyle}
+          >
+            <option value="">
+              Select Home
+            </option>
+
+            {stations.map((station)=>(
+              <option
+                key={station.id}
+                value={station.name}
+              >
+                {station.name}
+              </option>
+            ))}
+          </select>
+
+          <h3>
+            🏢 Work Station
+          </h3>
+
+          <select
+            value={workStation}
+            onChange={(e)=>
+              setWorkStation(
+                e.target.value
+              )
+            }
+            style={inputStyle}
+          >
+            <option value="">
+              Select Work
+            </option>
+
+            {stations.map((station)=>(
+              <option
+                key={station.id}
+                value={station.name}
+              >
+                {station.name}
+              </option>
+            ))}
+          </select>
+
+          <button
+            onClick={saveSetup}
+            style={{
+              width:"100%",
+              padding:18,
+              borderRadius:18,
+              border:"none",
+              background:"#2563EB",
+              color:"white",
+              fontWeight:700,
+              fontSize:18,
+              cursor:"pointer",
+              marginTop:20
+            }}
+          >
+            Continue →
+          </button>
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <main
+      style={{
+        minHeight:"100vh",
+        background:
+          "linear-gradient(to bottom,#050505,#111827)",
+        color:"white",
+        padding:"30px",
+        fontFamily:
+          "-apple-system,BlinkMacSystemFont,sans-serif"
+      }}
+    >
+      <h1
+        style={{
+          fontSize:38,
+          marginBottom:5
+        }}
+      >
+        Good morning 👋
+      </h1>
+
+      <p
+        style={{
+          opacity:.6,
+          marginBottom:30
+        }}
+      >
+        Your transit dashboard
+      </p>
+
+      <div
+        style={{
+          padding:30,
+          borderRadius:35,
+          background:
+          "linear-gradient(135deg,#2563EB,#1E1B4B)",
+          marginBottom:30
+        }}
+      >
+        <p>Today's commute</p>
+
+        <h2>
+          🏠 {homeStation}
+        </h2>
+
+        <div
+          style={{
+            margin:"10px 0"
+          }}
+        >
+          ↓
+        </div>
+
+        <h2>
+          🏢 {workStation}
+        </h2>
+
+        <div
+          style={{
+            marginTop:30
+          }}
+        >
+          <div
+            style={{
+              fontSize:65,
+              fontWeight:800,
+              color:scoreColor
+            }}
+          >
+            {commuteScore}
+          </div>
+
+          <div>
+            Transit
