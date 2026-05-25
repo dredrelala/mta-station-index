@@ -8,7 +8,7 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
-function calculateDistance(lat1, lon1, lat2, lon2) {
+function getDistance(lat1, lon1, lat2, lon2) {
   const R = 3959; // miles
 
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
@@ -27,7 +27,7 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 export default function Home() {
   const [stations, setStations] = useState([]);
   const [userLocation, setUserLocation] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     loadStations();
@@ -39,8 +39,8 @@ export default function Home() {
           longitude: position.coords.longitude,
         });
       },
-      () => {
-        console.log("Location permission denied");
+      (error) => {
+        console.log(error);
       }
     );
   }, []);
@@ -48,8 +48,7 @@ export default function Home() {
   async function loadStations() {
     const { data, error } = await supabase
       .from("stations")
-      .select("*")
-      .order("score", { ascending: false });
+      .select("*");
 
     if (error) {
       console.log(error);
@@ -57,10 +56,9 @@ export default function Home() {
     }
 
     setStations(data || []);
-    setLoading(false);
   }
 
-  const stationsWithDistance = stations.map((station) => {
+  let processedStations = stations.map((station) => {
     let distance = null;
 
     if (
@@ -68,7 +66,7 @@ export default function Home() {
       station.latitude &&
       station.longitude
     ) {
-      distance = calculateDistance(
+      distance = getDistance(
         userLocation.latitude,
         userLocation.longitude,
         Number(station.latitude),
@@ -78,32 +76,29 @@ export default function Home() {
 
     return {
       ...station,
-      distance,
+      distance: distance ? distance.toFixed(1) : null,
     };
   });
 
-  stationsWithDistance.sort((a, b) => {
-    if (a.distance === null) return 1;
-    if (b.distance === null) return -1;
-    return a.distance - b.distance;
-  });
-
-  const topStation = stations[0];
-
-  if (loading) {
-    return (
-      <div style={{ padding: 40 }}>
-        Loading stations...
-      </div>
+  if (search) {
+    processedStations = processedStations.filter((station) =>
+      station.name?.toLowerCase().includes(search.toLowerCase())
     );
   }
+
+  processedStations.sort((a, b) => {
+    if (a.score === b.score) return 0;
+    return b.score - a.score;
+  });
+
+  const topStation = processedStations[0];
 
   return (
     <main
       style={{
+        minHeight: "100vh",
         background: "#111",
         color: "white",
-        minHeight: "100vh",
         padding: "30px",
       }}
     >
@@ -111,34 +106,44 @@ export default function Home() {
 
       <br />
 
+      <input
+        placeholder="Search station..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        style={{
+          width: "100%",
+          padding: "12px",
+          borderRadius: "10px",
+          marginBottom: "20px",
+        }}
+      />
+
       {topStation && (
         <div
           style={{
             padding: "20px",
-            borderRadius: "16px",
-            background: "#1f2f6f",
+            borderRadius: "20px",
+            background: "#1b2d72",
             marginBottom: "30px",
           }}
         >
           <h2>🏆 Top Ranked Station</h2>
-
           <h1>{topStation.name}</h1>
-
           <h2>⭐ {topStation.score}/100</h2>
         </div>
       )}
 
-      <p>{stations.length} stations found</p>
+      <p>{processedStations.length} stations found</p>
 
       <br />
 
-      {stationsWithDistance.map((station, index) => (
+      {processedStations.map((station, index) => (
         <div
           key={station.id}
           style={{
             padding: "20px",
             marginBottom: "20px",
-            borderBottom: "1px solid #444",
+            borderBottom: "1px solid #333",
           }}
         >
           <h2>
@@ -152,8 +157,8 @@ export default function Home() {
           <p>
             📍{" "}
             {station.distance
-              ? `${station.distance.toFixed(1)} miles away`
-              : "Calculating distance..."}
+              ? `${station.distance} miles away`
+              : "Finding location..."}
           </p>
 
           <p>⏱ Wait: 5 min</p>
