@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect,useState } from "react";
+import { useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase=createClient(
@@ -23,38 +23,30 @@ const {data}=await supabase
 .from("stations")
 .select("*");
 
-const ranked=(data||[]).map((station)=>{
+const ranked=(data||[]).map(station=>{
 
-const cleanliness=Math.floor(Math.random()*4)+6;
-const reliability=Math.floor(Math.random()*4)+6;
-const crowding=Math.floor(Math.random()*10)+1;
-const delayScore=Math.floor(Math.random()*10)+1;
+const reliability=
+Math.floor(Math.random()*4)+6;
 
-const accessibility=
-station.accessibility ?? 7;
+const crowding=
+Math.floor(Math.random()*10)+1;
 
-const transfers=
-station.transfers ?? 3;
-
-const score=Math.round(
+const score=
+Math.round(
 (
-cleanliness*2+
-reliability*3+
-(11-crowding)*2+
-accessibility+
-transfers+
-(11-delayScore)
-)/9*10
+reliability*5+
+(11-crowding)*5
+)
 );
 
 return{
+
 ...station,
-cleanliness,
 reliability,
 crowding,
-delayScore,
 score,
 updated:"Today"
+
 };
 
 });
@@ -70,15 +62,6 @@ ranked.sort(
 loadStations();
 
 },[]);
-
-function status(score){
-
-if(score>=80) return "🟢 Excellent";
-if(score>=60) return "🟡 Good";
-
-return "🔴 Weak";
-
-}
 
 const filtered=[...stations]
 
@@ -112,10 +95,6 @@ if(sortBy==="reliability"){
 return b.reliability-a.reliability;
 }
 
-if(sortBy==="crowding"){
-return a.crowding-b.crowding;
-}
-
 return 0;
 
 });
@@ -128,14 +107,14 @@ return(
 <main
 style={{
 background:"#0b0f19",
+minHeight:"100vh",
 padding:"40px",
-color:"white",
-minHeight:"100vh"
+color:"white"
 }}
 >
 
 <h1>
-🚇 MTA Station Index V17
+🚇 MTA Station Index V18
 </h1>
 
 <input
@@ -147,8 +126,8 @@ setSearch(e.target.value)
 style={{
 width:"100%",
 padding:"15px",
-marginBottom:"20px",
-borderRadius:"15px"
+borderRadius:"15px",
+marginBottom:"20px"
 }}
 />
 
@@ -166,9 +145,14 @@ onChange={(e)=>
 setSortBy(e.target.value)
 }
 >
-<option value="score">Best Score</option>
-<option value="reliability">Most Reliable</option>
-<option value="crowding">Least Crowded</option>
+<option value="score">
+Best Score
+</option>
+
+<option value="reliability">
+Most Reliable
+</option>
+
 </select>
 
 <select
@@ -190,24 +174,33 @@ setBorough(e.target.value)
 
 <div
 style={{
-padding:"25px",
-background:"#1b2340",
+padding:"20px",
+background:"#1a2038",
 borderRadius:"20px",
 marginBottom:"20px"
 }}
 >
 
-<h2>🏆 Top Ranked Station</h2>
+<h2>
+🏆 Top Ranked Station
+</h2>
 
-<h1>{topStation.name}</h1>
+<h1>
+{topStation.name}
+</h1>
 
-<p>⭐ {topStation.score}/100</p>
+<p>
+⭐ {topStation.score}/100
+</p>
 
 </div>
 
 )}
 
-<p>{filtered.length} stations found</p>
+<p>
+{filtered.length}
+stations found
+</p>
 
 {filtered.map((station,index)=>(
 
@@ -216,37 +209,41 @@ key={index}
 style={{
 padding:"25px",
 marginBottom:"20px",
-background:"#161d2d",
+background:"#151c2e",
 borderRadius:"20px"
 }}
 >
 
 <h2>
-#{index+1} {station.name}
+#{index+1}
+{" "}
+{station.name}
 </h2>
 
-<p>{status(station.score)}</p>
+<p>
+⭐ Score:
+{station.score}
+</p>
 
 <hr/>
 
-<p>🚉 Line: {station.line || "Unknown"}</p>
-<p>📍 Borough: {station.borough || "Unknown"}</p>
-<p>🏢 Division: {station.division || "Unknown"}</p>
-<p>🆔 Station ID: {station.id || "Unknown"}</p>
+{Object.entries(station).map(
+([key,value])=>(
 
-<hr/>
+<p key={key}>
 
-<p>⭐ Score: {station.score}/100</p>
-<p>🧼 Cleanliness: {station.cleanliness}/10</p>
-<p>🧠 Reliability: {station.reliability}/10</p>
-<p>👥 Crowding: {station.crowding}/10</p>
-<p>🚨 Delay Score: {station.delayScore}/10</p>
-<p>♿ Accessibility: {station.accessibility || "Unknown"}</p>
-<p>🔁 Transfers: {station.transfers || "Unknown"}</p>
+<strong>
+{key}:
+</strong>
 
-<hr/>
+{" "}
 
-<p>🕒 Updated: {station.updated}</p>
+{String(value)}
+
+</p>
+
+)
+)}
 
 </div>
 
