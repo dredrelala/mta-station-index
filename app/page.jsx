@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 
-const supabase=createClient(
+const supabase = createClient(
 process.env.NEXT_PUBLIC_SUPABASE_URL,
 process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
@@ -23,7 +23,10 @@ const {data}=await supabase
 .from("stations")
 .select("*");
 
-const ranked=(data||[]).map(station=>{
+const ranked=(data||[]).map((station)=>{
+
+const cleanliness=
+Math.floor(Math.random()*4)+6;
 
 const reliability=
 Math.floor(Math.random()*4)+6;
@@ -31,27 +34,22 @@ Math.floor(Math.random()*4)+6;
 const crowding=
 Math.floor(Math.random()*10)+1;
 
-const cleanliness=
-Math.floor(Math.random()*4)+6;
-
 const delayScore=
 Math.floor(Math.random()*10)+1;
 
-const transfers=
+const calculatedTransfers=
 
 station.line
-? station.line
-.split("-")
-.length+1
-:1;
+? station.line.split("-").length+1
+: 2;
 
-const accessibility=
+const calculatedAccessibility=
 
-transfers>=4
-?9
-:transfers>=2
-?7
-:5;
+calculatedTransfers>=5
+? 10
+: calculatedTransfers>=3
+? 8
+: 6;
 
 const score=Math.round(
 
@@ -59,8 +57,8 @@ const score=Math.round(
 cleanliness*2+
 reliability*3+
 (11-crowding)*2+
-accessibility+
-transfers+
+calculatedAccessibility+
+calculatedTransfers+
 (11-delayScore)
 )
 /9
@@ -72,14 +70,20 @@ return{
 
 ...station,
 
+cleanliness,
 reliability,
 crowding,
-cleanliness,
 delayScore,
-transfers,
-accessibility,
-score,
-updated:"Today"
+
+transfers:
+calculatedTransfers,
+
+accessibility:
+calculatedAccessibility,
+
+updated:"Today",
+
+score
 
 };
 
@@ -148,7 +152,7 @@ color:"white"
 >
 
 <h1>
-🚇 MTA Station Index V19
+🚇 MTA Station Index V20
 </h1>
 
 <input
@@ -252,9 +256,7 @@ borderRadius:"20px"
 >
 
 <h2>
-#{index+1}
-{" "}
-{station.name}
+#{index+1} {station.name}
 </h2>
 
 <p>🚉 {station.line}</p>
@@ -265,10 +267,26 @@ borderRadius:"20px"
 <p>🧼 Cleanliness: {station.cleanliness}/10</p>
 <p>🧠 Reliability: {station.reliability}/10</p>
 <p>👥 Crowding: {station.crowding}/10</p>
-<p>♿ Accessibility: {station.accessibility}/10</p>
-<p>🔁 Transfers: {station.transfers}/10</p>
-<p>🚨 Delay Score: {station.delayScore}/10</p>
-<p>🕒 Updated: {station.updated}</p>
+
+<p>
+♿ Accessibility:
+{station.accessibility}/10
+</p>
+
+<p>
+🔁 Transfers:
+{station.transfers}/10
+</p>
+
+<p>
+🚨 Delay Score:
+{station.delayScore}/10
+</p>
+
+<p>
+🕒 Updated:
+{station.updated}
+</p>
 
 </div>
 
