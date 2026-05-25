@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect,useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase=createClient(
@@ -15,7 +15,6 @@ const [search,setSearch]=useState("");
 const [favorites,setFavorites]=useState([]);
 const [sortBy,setSortBy]=useState("score");
 const [borough,setBorough]=useState("All");
-const [nearMe,setNearMe]=useState(false);
 
 useEffect(()=>{
 
@@ -45,8 +44,7 @@ Math.floor(Math.random()*10)+1;
 
 const accessibility=
 station.line?.includes("-")
-?9
-:7;
+?9:7;
 
 const transfers=
 station.line?.split("-").length+2 || 3;
@@ -56,6 +54,12 @@ Math.floor(Math.random()*10)+1;
 
 const distance=
 Math.floor(Math.random()*20)+1;
+
+const elevator=
+Math.random()>.35;
+
+const commuteQuality=
+Math.floor(Math.random()*4)+6;
 
 const score=Math.round(
 
@@ -82,6 +86,8 @@ accessibility,
 transfers,
 delayScore,
 distance,
+elevator,
+commuteQuality,
 updated:"Today",
 score
 
@@ -101,45 +107,15 @@ loadStations();
 
 },[]);
 
-function toggleFavorite(name){
-
-let updated;
-
-if(
-favorites.includes(name)
-){
-
-updated=
-favorites.filter(
-item=>item!==name
-);
-
-}else{
-
-updated=[
-...favorites,
-name
-];
-
-}
-
-setFavorites(updated);
-
-localStorage.setItem(
-"favorites",
-JSON.stringify(updated)
-);
-
-}
-
 function status(score){
 
 if(score>=80){
 return "🟢 Excellent";
-}
 
-if(score>=60){
+}else if(score>=60){
+
 return "🟡 Good";
+
 }
 
 return "🔴 Weak";
@@ -149,15 +125,21 @@ return "🔴 Weak";
 function trend(station){
 
 if(station.delayScore>=8){
+
 return "⬆ Delays increasing";
+
 }
 
 if(station.crowding>=8){
+
 return "⬆ Crowding rising";
+
 }
 
 if(station.reliability>=8){
+
 return "⬇ Reliability improving";
+
 }
 
 return "➡ Stable";
@@ -168,29 +150,26 @@ const filtered=[...stations]
 
 .filter((station)=>{
 
-const matchesSearch=
+const searchMatch=
+
 station.name
 ?.toLowerCase()
 .includes(
 search.toLowerCase()
 );
 
-const matchesBorough=
+const boroughMatch=
 
 borough==="All"
 ?true
 :station.borough===borough;
 
-return matchesSearch
-&& matchesBorough;
+return searchMatch
+&& boroughMatch;
 
 })
 
 .sort((a,b)=>{
-
-if(nearMe){
-return a.distance-b.distance;
-}
 
 if(sortBy==="score"){
 return b.score-a.score;
@@ -216,14 +195,14 @@ return(
 <main
 style={{
 background:"#0b0f19",
-minHeight:"100vh",
 padding:"40px",
+minHeight:"100vh",
 color:"white"
 }}
 >
 
 <h1>
-🚇 MTA Station Index V15
+🚇 MTA Station Index V16
 </h1>
 
 <input
@@ -235,8 +214,8 @@ setSearch(e.target.value)
 style={{
 width:"100%",
 padding:"15px",
-borderRadius:"15px",
-marginBottom:"20px"
+marginBottom:"20px",
+borderRadius:"15px"
 }}
 />
 
@@ -244,8 +223,7 @@ marginBottom:"20px"
 style={{
 display:"flex",
 gap:"10px",
-marginBottom:"20px",
-flexWrap:"wrap"
+marginBottom:"20px"
 }}
 >
 
@@ -285,26 +263,16 @@ setBorough(e.target.value)
 
 </select>
 
-<button
-onClick={()=>
-setNearMe(
-!nearMe
-)
-}
->
-📍 Near Me
-</button>
-
 </div>
 
 {topStation && (
 
 <div
 style={{
-padding:"20px",
+padding:"25px",
 background:"#1a2038",
 borderRadius:"20px",
-marginBottom:"20px"
+marginBottom:"25px"
 }}
 >
 
@@ -321,7 +289,9 @@ marginBottom:"20px"
 </p>
 
 <p>
-{status(topStation.score)}
+{status(
+topStation.score
+)}
 </p>
 
 </div>
@@ -329,10 +299,8 @@ marginBottom:"20px"
 )}
 
 <p>
-
 {filtered.length}
 stations found
-
 </p>
 
 {filtered.map((station,index)=>(
@@ -340,53 +308,101 @@ stations found
 <div
 key={index}
 style={{
-padding:"20px",
+padding:"25px",
 marginBottom:"20px",
-background:"#151c2e",
+background:"#161d2d",
 borderRadius:"20px"
 }}
 >
 
 <h2>
-
-{favorites.includes(
-station.name
-)
-?"⭐":"☆"}
-
+#{index+1}
 {" "}
-
-{index+1}. {station.name}
-
+{station.name}
 </h2>
 
-<button
-onClick={()=>
-toggleFavorite(
-station.name
-)
-}
->
-Favorite
-</button>
+<p>
+🚉 Line:
+{station.line}
+</p>
 
-<p>🚉 {station.line}</p>
-<p>📍 {station.borough}</p>
+<p>
+📍 Borough:
+{station.borough}
+</p>
 
-<p>⭐ {station.score}/100</p>
+<p>
+⭐ Score:
+{station.score}/100
+</p>
 
-<p>{status(station.score)}</p>
+<p>
+{status(
+station.score
+)}
+</p>
 
-<p>📈 {trend(station)}</p>
+<p>
+📈 Trend:
+{trend(
+station
+)}
+</p>
 
-<p>🧼 Cleanliness: {station.cleanliness}/10</p>
-<p>🧠 Reliability: {station.reliability}/10</p>
-<p>👥 Crowding: {station.crowding}/10</p>
-<p>♿ Accessibility: {station.accessibility}/10</p>
-<p>🔁 Transfers: {station.transfers}/10</p>
-<p>🚨 Delay Score: {station.delayScore}/10</p>
-<p>🕒 Updated: {station.updated}</p>
-<p>📍 {station.distance} mins away</p>
+<hr/>
+
+<p>
+🧼 Cleanliness:
+{station.cleanliness}/10
+</p>
+
+<p>
+🧠 Reliability:
+{station.reliability}/10
+</p>
+
+<p>
+👥 Crowding:
+{station.crowding}/10
+</p>
+
+<p>
+♿ Accessibility:
+{station.accessibility}/10
+</p>
+
+<p>
+🔁 Transfers:
+{station.transfers}/10
+</p>
+
+<p>
+🚨 Delay:
+{station.delayScore}/10
+</p>
+
+<p>
+🛗 Elevator:
+{station.elevator
+?"Available"
+:"Unavailable"}
+</p>
+
+<p>
+🧭 Commute Quality:
+{station.commuteQuality}/10
+</p>
+
+<p>
+📍 Distance:
+{station.distance}
+mins away
+</p>
+
+<p>
+🕒 Updated:
+{station.updated}
+</p>
 
 </div>
 
