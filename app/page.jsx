@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect,useState } from "react";
+import { useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 
-const supabase=createClient(
+const supabase = createClient(
 process.env.NEXT_PUBLIC_SUPABASE_URL,
 process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
@@ -13,8 +13,8 @@ export default function Home(){
 const [stations,setStations]=useState([]);
 const [search,setSearch]=useState("");
 const [favorites,setFavorites]=useState([]);
-const [borough,setBorough]=useState("All");
 const [sortBy,setSortBy]=useState("score");
+const [borough,setBorough]=useState("All");
 
 useEffect(()=>{
 
@@ -56,9 +56,6 @@ Math.floor(Math.random()*10)+1;
 const distance=
 Math.floor(Math.random()*20)+1;
 
-const elevator=
-Math.random()>.3;
-
 const score=Math.round(
 
 (
@@ -84,7 +81,6 @@ accessibility,
 transfers,
 delayScore,
 distance,
-elevator,
 updated:"Today",
 score
 
@@ -135,7 +131,7 @@ JSON.stringify(updated)
 
 }
 
-function badge(score){
+function status(score){
 
 if(score>=80){
 return "🟢 Excellent";
@@ -149,25 +145,43 @@ return "🔴 Weak";
 
 }
 
+function trend(station){
+
+if(station.delayScore>=8){
+return "⬆ Delays increasing";
+}
+
+if(station.crowding>=8){
+return "⬆ Crowding rising";
+}
+
+if(station.reliability>=8){
+return "⬇ Reliability improving";
+}
+
+return "➡ Stable";
+
+}
+
 const filtered=[...stations]
 
 .filter((station)=>{
 
-const searchMatch=
+const matchesSearch=
 station.name
 ?.toLowerCase()
 .includes(
 search.toLowerCase()
 );
 
-const boroughMatch=
+const matchesBorough=
 
 borough==="All"
 ?true
 :station.borough===borough;
 
-return searchMatch
-&& boroughMatch;
+return matchesSearch
+&& matchesBorough;
 
 })
 
@@ -208,7 +222,7 @@ color:"white"
 >
 
 <h1>
-🚇 MTA Station Index V13
+🚇 MTA Station Index V14
 </h1>
 
 <input
@@ -240,10 +254,23 @@ onChange={(e)=>
 setSortBy(e.target.value)
 }
 >
-<option value="score">Best Score</option>
-<option value="reliability">Most Reliable</option>
-<option value="crowding">Least Crowded</option>
-<option value="distance">Closest</option>
+
+<option value="score">
+Best Score
+</option>
+
+<option value="reliability">
+Most Reliable
+</option>
+
+<option value="crowding">
+Least Crowded
+</option>
+
+<option value="distance">
+Closest
+</option>
+
 </select>
 
 <select
@@ -252,11 +279,13 @@ onChange={(e)=>
 setBorough(e.target.value)
 }
 >
+
 <option>All</option>
 <option>M</option>
 <option>Bk</option>
 <option>Q</option>
 <option>Bx</option>
+
 </select>
 
 </div>
@@ -272,16 +301,34 @@ marginBottom:"20px"
 }}
 >
 
-<h2>🏆 Top Station</h2>
-<h1>{topStation.name}</h1>
-<p>⭐ {topStation.score}/100</p>
-<p>{badge(topStation.score)}</p>
+<h2>
+🏆 Top Ranked Station
+</h2>
+
+<h1>
+{topStation.name}
+</h1>
+
+<p>
+⭐ {topStation.score}/100
+</p>
+
+<p>
+{status(
+topStation.score
+)}
+</p>
 
 </div>
 
 )}
 
-<p>{filtered.length} stations found</p>
+<p>
+
+{filtered.length}
+stations found
+
+</p>
 
 {filtered.map((station,index)=>(
 
@@ -296,10 +343,16 @@ borderRadius:"20px"
 >
 
 <h2>
+
 {favorites.includes(
 station.name
 )
-?"⭐":"☆"} {index+1}. {station.name}
+?"⭐":"☆"}
+
+{" "}
+
+{index+1}. {station.name}
+
 </h2>
 
 <button
@@ -312,21 +365,67 @@ station.name
 Favorite
 </button>
 
-<p>🚉 Line: {station.line}</p>
-<p>📍 Borough: {station.borough}</p>
+<p>🚉 {station.line}</p>
+<p>📍 {station.borough}</p>
 
-<p>⭐ Score: {station.score}/100</p>
-<p>{badge(station.score)}</p>
+<p>
+⭐ Score:
+{station.score}/100
+</p>
 
-<p>🧼 Cleanliness: {station.cleanliness}/10</p>
-<p>🧠 Reliability: {station.reliability}/10</p>
-<p>👥 Crowding: {station.crowding}/10</p>
-<p>♿ Accessibility: {station.accessibility}/10</p>
-<p>🔁 Transfers: {station.transfers}/10</p>
-<p>🚨 Delay Score: {station.delayScore}/10</p>
-<p>🛗 Elevator: {station.elevator ? "Yes":"No"}</p>
-<p>🕒 Updated: {station.updated}</p>
-<p>📍 Distance: {station.distance} mins away</p>
+<p>
+{status(
+station.score
+)}
+</p>
+
+<p>
+📈 Trend:
+{trend(
+station
+)}
+</p>
+
+<p>
+🧼 Cleanliness:
+{station.cleanliness}/10
+</p>
+
+<p>
+🧠 Reliability:
+{station.reliability}/10
+</p>
+
+<p>
+👥 Crowding:
+{station.crowding}/10
+</p>
+
+<p>
+♿ Accessibility:
+{station.accessibility}/10
+</p>
+
+<p>
+🔁 Transfers:
+{station.transfers}/10
+</p>
+
+<p>
+🚨 Delay Score:
+{station.delayScore}/10
+</p>
+
+<p>
+🕒 Updated:
+{station.updated}
+</p>
+
+<p>
+📍 Distance:
+{station.distance}
+mins away
+</p>
 
 </div>
 
