@@ -14,262 +14,355 @@ function scoreColor(score){
  return "#FF453A";
 }
 
+function greeting(){
+ const hour=new Date().getHours();
+
+ if(hour<12) return "Good morning";
+ if(hour<18) return "Good afternoon";
+
+ return "Good evening";
+}
+
 export default function Home(){
 
- const [stations,setStations]=useState([]);
- const [search,setSearch]=useState("");
+const [stations,setStations]=useState([]);
+const [search,setSearch]=useState("");
 
- useEffect(()=>{
-   loadStations();
- },[]);
+useEffect(()=>{
+loadStations();
+},[]);
 
- async function loadStations(){
+async function loadStations(){
 
-   const {data,error}=await supabase
-   .from("stations")
-   .select("*");
+const {data,error}=await supabase
+.from("stations")
+.select("*");
 
-   if(error){
-     console.log(error);
-     return;
-   }
+if(error){
+console.log(error);
+return;
+}
 
-   setStations(data || []);
- }
+setStations(data||[]);
 
- let filtered=[...stations];
+}
 
- if(search){
+let filtered=[...stations];
 
-   filtered=filtered.filter((station)=>
-   station.name
-   ?.toLowerCase()
-   .includes(search.toLowerCase())
-   );
+if(search){
 
- }
+filtered=filtered.filter((station)=>
+station.name
+?.toLowerCase()
+.includes(search.toLowerCase())
+);
 
- filtered.sort(
- (a,b)=>(b.score||50)-(a.score||50)
- );
+}
 
- const hero=filtered[0];
- const trending=filtered.slice(1,6);
+filtered.sort(
+(a,b)=>(b.score||50)-(a.score||50)
+);
 
- return(
+const hero=filtered[0];
+const nearby=filtered.slice(1,5);
+const trending=filtered.slice(5,10);
 
- <main
- style={{
- background:"#080808",
- color:"white",
- minHeight:"100vh",
- padding:"20px",
- fontFamily:"-apple-system"
- }}
- >
+return(
 
- <h1
- style={{
- fontSize:"34px",
- fontWeight:"700",
- marginBottom:"20px"
- }}
- >
- 🚇 Bloomberg for Transit
- </h1>
+<main
+style={{
+background:"#060606",
+minHeight:"100vh",
+padding:"24px",
+color:"white",
+fontFamily:
+"-apple-system,BlinkMacSystemFont,sans-serif"
+}}
+>
 
- <input
- placeholder="Search stations..."
- value={search}
- onChange={(e)=>setSearch(e.target.value)}
- style={{
- width:"100%",
- padding:"18px",
- borderRadius:"20px",
- border:"none",
- background:"#171717",
- color:"white",
- fontSize:"16px",
- marginBottom:"30px"
- }}
- />
+<div
+style={{
+marginBottom:"35px"
+}}
+>
 
- {hero && (
+<h3
+style={{
+opacity:.65,
+fontWeight:"500",
+marginBottom:"6px"
+}}
+>
+{greeting()} 👋
+</h3>
 
- <div
- style={{
- borderRadius:"30px",
- padding:"30px",
- background:
- "linear-gradient(135deg,#2563EB,#1E1B4B)",
- marginBottom:"35px"
- }}
- >
+<h1
+style={{
+fontSize:"40px",
+fontWeight:"800",
+lineHeight:"1"
+}}
+>
+Bloomberg
+for Transit
+</h1>
 
- <p
- style={{
- opacity:.8
- }}
- >
- Nearest Station
- </p>
+</div>
 
- <h1
- style={{
- fontSize:"36px",
- marginTop:"8px"
- }}
- >
- {hero.name}
- </h1>
+<input
+placeholder="Search stations..."
+value={search}
+onChange={(e)=>setSearch(e.target.value)}
+style={{
+width:"100%",
+padding:"18px",
+border:"none",
+borderRadius:"22px",
+background:"#151515",
+color:"white",
+fontSize:"16px",
+marginBottom:"30px"
+}}
+/>
 
- <div
- style={{
- display:"flex",
- gap:"15px",
- marginTop:"20px",
- alignItems:"center"
- }}
- >
+{hero && (
 
- <div
- style={{
- width:"70px",
- height:"70px",
- borderRadius:"50%",
- background:
- scoreColor(hero.score||50),
- display:"flex",
- justifyContent:"center",
- alignItems:"center",
- fontWeight:"700",
- fontSize:"22px"
- }}
- >
- {hero.score||50}
- </div>
+<div
+style={{
+padding:"28px",
+borderRadius:"32px",
+background:
+"linear-gradient(135deg,#2563EB,#312E81)",
+marginBottom:"35px"
+}}
+>
 
- <div>
+<p
+style={{
+opacity:.8
+}}
+>
+📍 Nearest Station
+</p>
 
- <p>🟢 Excellent Service</p>
- <p>📍 6 mins away</p>
+<h1
+style={{
+fontSize:"34px",
+marginTop:"8px"
+}}
+>
+{hero.name}
+</h1>
 
- </div>
+<div
+style={{
+display:"flex",
+justifyContent:"space-between",
+alignItems:"center",
+marginTop:"24px"
+}}
+>
 
- </div>
+<div>
 
- </div>
+<h2
+style={{
+fontSize:"52px",
+fontWeight:"800"
+}}
+>
+{hero.score||50}
+</h2>
 
- )}
+<p
+style={{
+opacity:.7
+}}
+>
+Transit Score
+</p>
 
- <h2
- style={{
- marginBottom:"20px"
- }}
- >
- Trending Nearby
- </h2>
+</div>
 
- <div
- style={{
- display:"flex",
- overflowX:"auto",
- gap:"15px",
- paddingBottom:"20px"
- }}
- >
+<div
+style={{
+width:"80px",
+height:"80px",
+borderRadius:"50%",
+background:
+scoreColor(hero.score||50),
+display:"flex",
+justifyContent:"center",
+alignItems:"center",
+fontWeight:"700",
+fontSize:"24px"
+}}
+>
+⭐
+</div>
 
- {trending.map((station,index)=>(
+</div>
 
- <div
- key={index}
- style={{
- minWidth:"240px",
- background:"#151515",
- borderRadius:"25px",
- padding:"20px"
- }}
- >
+<div
+style={{
+display:"flex",
+gap:"10px",
+marginTop:"20px",
+flexWrap:"wrap"
+}}
+>
 
- <div
- style={{
- display:"flex",
- justifyContent:"space-between"
- }}
- >
+<span
+style={{
+padding:"8px 14px",
+borderRadius:"999px",
+background:"rgba(255,255,255,.15)"
+}}
+>
+🟢 Reliable
+</span>
 
- <div>
+<span
+style={{
+padding:"8px 14px",
+borderRadius:"999px",
+background:"rgba(255,255,255,.15)"
+}}
+>
+♿ Accessible
+</span>
 
- <h3>{station.name}</h3>
+<span
+style={{
+padding:"8px 14px",
+borderRadius:"999px",
+background:"rgba(255,255,255,.15)"
+}}
+>
+🚆 Service Good
+</span>
 
- <p
- style={{
- opacity:.6
- }}
- >
- Good Service
- </p>
+</div>
 
- </div>
+</div>
 
- <div
- style={{
- background:
- scoreColor(
- station.score||50
- ),
- width:"45px",
- height:"45px",
- borderRadius:"50%",
- display:"flex",
- justifyContent:"center",
- alignItems:"center"
- }}
- >
- {station.score||50}
- </div>
+)}
 
- </div>
+<h2
+style={{
+marginBottom:"18px"
+}}
+>
+Nearby
+</h2>
 
- <div
- style={{
- display:"flex",
- gap:"10px",
- marginTop:"15px",
- flexWrap:"wrap"
- }}
- >
+<div
+style={{
+display:"flex",
+overflowX:"auto",
+gap:"15px",
+marginBottom:"35px"
+}}
+>
 
- <span
- style={{
- background:"#222",
- padding:"6px 10px",
- borderRadius:"999px"
- }}
- >
- 🧠 Reliable
- </span>
+{nearby.map((station,index)=>(
 
- <span
- style={{
- background:"#222",
- padding:"6px 10px",
- borderRadius:"999px"
- }}
- >
- ♿ Access
- </span>
+<div
+key={index}
+style={{
+minWidth:"220px",
+padding:"22px",
+borderRadius:"28px",
+background:"#141414"
+}}
+>
 
- </div>
+<h3>
+{station.name}
+</h3>
 
- </div>
+<div
+style={{
+marginTop:"20px",
+fontSize:"28px",
+fontWeight:"700"
+}}
+>
+{station.score||50}
+</div>
 
- ))}
+<p
+style={{
+opacity:.6
+}}
+>
+Transit Score
+</p>
 
- </div>
+</div>
 
- </main>
+))}
 
- )
+</div>
+
+<h2
+style={{
+marginBottom:"18px"
+}}
+>
+Trending Today
+</h2>
+
+{trending.map((station,index)=>(
+
+<div
+key={index}
+style={{
+padding:"20px",
+borderBottom:
+"1px solid #1d1d1d"
+}}
+>
+
+<div
+style={{
+display:"flex",
+justifyContent:"space-between"
+}}
+>
+
+<div>
+
+<h3>
+{station.name}
+</h3>
+
+<p
+style={{
+opacity:.6
+}}
+>
+Good Service
+</p>
+
+</div>
+
+<div
+style={{
+fontWeight:"700"
+}}
+>
+⭐ {station.score||50}
+</div>
+
+</div>
+
+</div>
+
+))}
+
+</main>
+
+)
 
 }
