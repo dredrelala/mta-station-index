@@ -9,7 +9,7 @@ const supabase = createClient(
 );
 
 function getDistance(lat1, lon1, lat2, lon2) {
-  const R = 3959; // miles
+  const R = 3959; // Earth radius in miles
 
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
   const dLon = ((lon2 - lon1) * Math.PI) / 180;
@@ -33,13 +33,22 @@ export default function Home() {
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
+        console.log(
+          "Your location:",
+          position.coords.latitude,
+          position.coords.longitude
+        );
+
         setUserLocation({
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
         });
       },
       (error) => {
-        console.log(error);
+        console.log("Location error:", error);
+      },
+      {
+        enableHighAccuracy: true,
       }
     );
   }, []);
@@ -50,7 +59,7 @@ export default function Home() {
       .select("*");
 
     if (error) {
-      console.log("Supabase error:", error);
+      console.log(error);
       return;
     }
 
@@ -58,27 +67,28 @@ export default function Home() {
   }
 
   let processedStations = stations.map((station) => {
-    let distance = null;
+    let miles = null;
+    let walkingMinutes = null;
 
     if (
       userLocation &&
       station.latitude != null &&
       station.longitude != null
     ) {
-      distance = getDistance(
+      miles = getDistance(
         userLocation.latitude,
         userLocation.longitude,
         parseFloat(station.latitude),
         parseFloat(station.longitude)
       );
+
+      walkingMinutes = Math.round(miles * 20);
     }
 
     return {
       ...station,
-      distance:
-        distance !== null
-          ? distance.toFixed(1)
-          : null,
+      miles,
+      walkingMinutes
     };
   });
 
@@ -90,8 +100,12 @@ export default function Home() {
     );
   }
 
+  // nearest first
   processedStations.sort((a, b) => {
-    return (b.score || 0) - (a.score || 0);
+    if (a.miles == null) return 1;
+    if (b.miles == null) return -1;
+
+    return a.miles - b.miles;
   });
 
   const topStation = processedStations[0];
@@ -117,8 +131,7 @@ export default function Home() {
           width: "100%",
           padding: "12px",
           borderRadius: "10px",
-          marginBottom: "20px",
-          border: "none"
+          marginBottom: "20px"
         }}
       />
 
@@ -131,9 +144,11 @@ export default function Home() {
             marginBottom: "30px"
           }}
         >
-          <h2>🏆 Top Ranked Station</h2>
+          <h2>🏆 Nearest Station</h2>
           <h1>{topStation.name}</h1>
-          <h2>⭐ {topStation.score}/100</h2>
+          <h2>
+            📍 {topStation.walkingMinutes || "?"} mins away
+          </h2>
         </div>
       )}
 
@@ -159,23 +174,22 @@ export default function Home() {
           <p>🟢 Good Service</p>
 
           <p>
-            📍{" "}
-            {station.distance
-              ? `${station.distance} miles away`
-              : "Location unavailable"}
+            📍 {station.walkingMinutes != null
+              ? `${station.walkingMinutes} mins away`
+              : "Finding location..."}
           </p>
-
-          <p>⏱ Wait: 5 min</p>
 
           <p>🧼 Cleanliness: {station.cleanliness || 9}/10</p>
 
-          <p>🧠 Reliability: {station.reliability || 9}/10</p>
+          <p>🧠 Reliability: {station.reliability || 7}/10</p>
+
+          <p>👥 Crowding: {station.crowding || 5}/10</p>
 
           <p>♿ Accessibility: {station.accessibility || 8}/10</p>
 
           <p>🔁 Transfers: {station.transfers || 4}/10</p>
 
-          <p>🚨 Delay: {station.delay || 3}/10</p>
+          <p>🚨 Delay Score: {station.delay || 3}/10</p>
         </div>
       ))}
     </main>
