@@ -15,11 +15,10 @@ function getDistance(lat1, lon1, lat2, lon2) {
   const dLon = ((lon2 - lon1) * Math.PI) / 180;
 
   const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.sin(dLat / 2) ** 2 +
     Math.cos((lat1 * Math.PI) / 180) *
       Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
+      Math.sin(dLon / 2) ** 2;
 
   return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
 }
@@ -51,7 +50,7 @@ export default function Home() {
       .select("*");
 
     if (error) {
-      console.log(error);
+      console.log("Supabase error:", error);
       return;
     }
 
@@ -63,32 +62,36 @@ export default function Home() {
 
     if (
       userLocation &&
-      station.latitude &&
-      station.longitude
+      station.latitude != null &&
+      station.longitude != null
     ) {
       distance = getDistance(
         userLocation.latitude,
         userLocation.longitude,
-        Number(station.latitude),
-        Number(station.longitude)
+        parseFloat(station.latitude),
+        parseFloat(station.longitude)
       );
     }
 
     return {
       ...station,
-      distance: distance ? distance.toFixed(1) : null,
+      distance:
+        distance !== null
+          ? distance.toFixed(1)
+          : null,
     };
   });
 
-  if (search) {
+  if (search.trim()) {
     processedStations = processedStations.filter((station) =>
-      station.name?.toLowerCase().includes(search.toLowerCase())
+      station.name
+        ?.toLowerCase()
+        .includes(search.toLowerCase())
     );
   }
 
   processedStations.sort((a, b) => {
-    if (a.score === b.score) return 0;
-    return b.score - a.score;
+    return (b.score || 0) - (a.score || 0);
   });
 
   const topStation = processedStations[0];
@@ -115,6 +118,7 @@ export default function Home() {
           padding: "12px",
           borderRadius: "10px",
           marginBottom: "20px",
+          border: "none"
         }}
       />
 
@@ -124,7 +128,7 @@ export default function Home() {
             padding: "20px",
             borderRadius: "20px",
             background: "#1b2d72",
-            marginBottom: "30px",
+            marginBottom: "30px"
           }}
         >
           <h2>🏆 Top Ranked Station</h2>
@@ -143,14 +147,14 @@ export default function Home() {
           style={{
             padding: "20px",
             marginBottom: "20px",
-            borderBottom: "1px solid #333",
+            borderBottom: "1px solid #333"
           }}
         >
           <h2>
             #{index + 1} • {station.name}
           </h2>
 
-          <p>⭐ {station.score}/100</p>
+          <p>⭐ {station.score || 50}/100</p>
 
           <p>🟢 Good Service</p>
 
@@ -158,7 +162,7 @@ export default function Home() {
             📍{" "}
             {station.distance
               ? `${station.distance} miles away`
-              : "Finding location..."}
+              : "Location unavailable"}
           </p>
 
           <p>⏱ Wait: 5 min</p>
