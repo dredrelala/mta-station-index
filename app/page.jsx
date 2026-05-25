@@ -4,196 +4,297 @@ import { useEffect, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+ process.env.NEXT_PUBLIC_SUPABASE_URL,
+ process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 );
 
-function getDistance(lat1, lon1, lat2, lon2) {
-  const R = 3959;
-
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) ** 2;
-
-  return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+function scoreColor(score){
+ if(score >= 85) return "#34C759";
+ if(score >= 70) return "#FFCC00";
+ return "#FF453A";
 }
 
 export default function Home() {
-  const [stations, setStations] = useState([]);
-  const [userLocation, setUserLocation] = useState(null);
-  const [search, setSearch] = useState("");
+ const [stations,setStations] = useState([]);
+ const [search,setSearch] = useState("");
 
-  useEffect(() => {
-    loadStations();
+ useEffect(()=>{
+   loadStations();
+ },[]);
 
-    let watchId;
+ async function loadStations(){
+   const {data,error} = await supabase
+   .from("stations")
+   .select("*");
 
-    if (navigator.geolocation) {
-      watchId = navigator.geolocation.watchPosition(
-        (position) => {
-          setUserLocation({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude
-          });
+   if(error){
+     console.log(error);
+     return;
+   }
 
-          console.log(
-            "Live location:",
-            position.coords.latitude,
-            position.coords.longitude
-          );
-        },
-        (error) => {
-          console.log("Location error:", error);
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 15000,
-          maximumAge: 0
-        }
-      );
-    }
+   setStations(data || []);
+ }
 
-    return () => {
-      if (watchId) {
-        navigator.geolocation.clearWatch(watchId);
-      }
-    };
-  }, []);
+ let filtered = stations;
 
-  async function loadStations() {
-    const { data, error } = await supabase
-      .from("stations")
-      .select("*");
+ if(search.trim()){
+   filtered = filtered.filter((station)=>
+    station.name?.toLowerCase()
+    .includes(search.toLowerCase())
+   );
+ }
 
-    if (error) {
-      console.log(error);
-      return;
-    }
+ filtered.sort((a,b)=>(b.score||50)-(a.score||50));
 
-    setStations(data || []);
-  }
+ const featured = filtered[0];
 
-  let processedStations = stations.map((station) => {
-    let miles = null;
+ return (
+   <main
+   style={{
+     minHeight:"100vh",
+     background:"#0B0B0D",
+     color:"white",
+     padding:"24px",
+     fontFamily:"-apple-system"
+   }}
+   >
 
-    if (
-      userLocation &&
-      station.latitude != null &&
-      station.longitude != null
-    ) {
-      miles = getDistance(
-        userLocation.latitude,
-        userLocation.longitude,
-        parseFloat(station.latitude),
-        parseFloat(station.longitude)
-      );
-    }
+   <h1
+   style={{
+     fontSize:"34px",
+     fontWeight:"700",
+     marginBottom:"20px"
+   }}
+   >
+   🚇 Bloomberg for Transit
+   </h1>
 
-    return {
-      ...station,
-      miles,
-      walkingMinutes:
-        miles != null
-          ? Math.max(1, Math.round(miles * 20))
-          : null
-    };
-  });
+   <div
+   style={{
+     position:"sticky",
+     top:"10px",
+     zIndex:"100",
+     marginBottom:"30px"
+   }}
+   >
+   <input
+   placeholder="Search station..."
+   value={search}
+   onChange={(e)=>setSearch(e.target.value)}
+   style={{
+     width:"100%",
+     padding:"16px",
+     borderRadius:"18px",
+     border:"none",
+     fontSize:"16px",
+     background:"#1C1C1E",
+     color:"white"
+   }}
+   />
+   </div>
 
-  if (search.trim()) {
-    processedStations = processedStations.filter((station) =>
-      station.name
-        ?.toLowerCase()
-        .includes(search.toLowerCase())
-    );
-  }
+   {featured && (
 
-  processedStations.sort((a, b) => {
-    if (a.miles == null) return 1;
-    if (b.miles == null) return -1;
+   <div
+   style={{
+      background:
+      "linear-gradient(135deg,#1F3A8A,#111827)",
+      borderRadius:"30px",
+      padding:"30px",
+      marginBottom:"35px",
+      boxShadow:"0px 8px 40px rgba(0,0,0,.35)"
+   }}
+   >
 
-    return a.miles - b.miles;
-  });
+   <p
+   style={{
+      opacity:.7,
+      marginBottom:"8px"
+   }}
+   >
+   Top Station Today
+   </p>
 
-  const nearestStation = processedStations[0];
+   <h1
+   style={{
+      fontSize:"32px",
+      marginBottom:"10px"
+   }}
+   >
+   {featured.name}
+   </h1>
 
-  return (
-    <main
-      style={{
-        minHeight: "100vh",
-        background: "#111",
-        color: "white",
-        padding: "30px"
-      }}
-    >
-      <h1>🚇 Bloomberg for Transit</h1>
+   <div
+   style={{
+      display:"inline-block",
+      padding:"10px 18px",
+      borderRadius:"999px",
+      background:
+      scoreColor(featured.score || 50)
+   }}
+   >
+   ⭐ {featured.score || 50}
+   </div>
 
-      <input
-        placeholder="Search station..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        style={{
-          width: "100%",
-          padding: "12px",
-          borderRadius: "10px",
-          marginBottom: "20px"
-        }}
-      />
+   <div
+   style={{
+      marginTop:"20px",
+      display:"flex",
+      gap:"12px",
+      flexWrap:"wrap"
+   }}
+   >
 
-      {nearestStation && (
-        <div
-          style={{
-            background:"#1b2d72",
-            padding:"20px",
-            borderRadius:"20px",
-            marginBottom:"30px"
-          }}
-        >
-          <h2>📍 Nearest Station</h2>
-          <h1>{nearestStation.name}</h1>
-          <h3>
-            {nearestStation.walkingMinutes ?? "?"}
-            {" "}mins away
-          </h3>
-        </div>
-      )}
+   <div
+   style={{
+      background:"rgba(255,255,255,.08)",
+      padding:"12px",
+      borderRadius:"16px"
+   }}
+   >
+   🧠 Reliable
+   </div>
 
-      <p>{processedStations.length} stations found</p>
+   <div
+   style={{
+      background:"rgba(255,255,255,.08)",
+      padding:"12px",
+      borderRadius:"16px"
+   }}
+   >
+   ♿ Accessible
+   </div>
 
-      {processedStations.map((station,index)=>(
-        <div
-          key={station.id}
-          style={{
-            padding:"20px",
-            marginBottom:"20px",
-            borderBottom:"1px solid #333"
-          }}
-        >
-          <h2>
-            #{index+1} • {station.name}
-          </h2>
+   <div
+   style={{
+      background:"rgba(255,255,255,.08)",
+      padding:"12px",
+      borderRadius:"16px"
+   }}
+   >
+   🚆 Good Service
+   </div>
 
-          <p>⭐ {station.score || 50}/100</p>
+   </div>
 
-          <p>
-            📍 {
-              station.walkingMinutes != null
-              ? `${station.walkingMinutes} mins away`
-              : "Finding location..."
-            }
-          </p>
+   </div>
 
-          <p>🧼 Cleanliness: {station.cleanliness || 9}/10</p>
-          <p>🧠 Reliability: {station.reliability || 9}/10</p>
-          <p>♿ Accessibility: {station.accessibility || 8}/10</p>
-          <p>🔁 Transfers: {station.transfers || 4}/10</p>
-          <p>🚨 Delay: {station.delay || 3}/10</p>
-        </div>
-      ))}
-    </main>
-  );
+   )}
+
+   <h2
+   style={{
+      marginBottom:"20px"
+   }}
+   >
+   Nearby Stations
+   </h2>
+
+   {filtered.map((station,index)=>(
+
+   <div
+   key={station.id || index}
+   style={{
+      background:"#161618",
+      borderRadius:"25px",
+      padding:"22px",
+      marginBottom:"18px",
+      boxShadow:
+      "0px 5px 20px rgba(0,0,0,.25)"
+   }}
+   >
+
+   <div
+   style={{
+      display:"flex",
+      justifyContent:"space-between",
+      alignItems:"center"
+   }}
+   >
+
+   <div>
+
+   <h2
+   style={{
+      fontSize:"20px",
+      marginBottom:"6px"
+   }}
+   >
+   {station.name}
+   </h2>
+
+   <p
+   style={{
+      opacity:.6
+   }}
+   >
+   🟢 Good Service
+   </p>
+
+   </div>
+
+   <div
+   style={{
+      background:
+      scoreColor(station.score || 50),
+      width:"58px",
+      height:"58px",
+      borderRadius:"50%",
+      display:"flex",
+      justifyContent:"center",
+      alignItems:"center",
+      fontWeight:"700"
+   }}
+   >
+   {station.score || 50}
+   </div>
+
+   </div>
+
+   <div
+   style={{
+      marginTop:"20px",
+      display:"flex",
+      gap:"10px",
+      flexWrap:"wrap"
+   }}
+   >
+
+   <span
+   style={{
+      background:"#222",
+      padding:"8px 12px",
+      borderRadius:"999px"
+   }}
+   >
+   🧼 Clean
+   </span>
+
+   <span
+   style={{
+      background:"#222",
+      padding:"8px 12px",
+      borderRadius:"999px"
+   }}
+   >
+   🧠 Reliable
+   </span>
+
+   <span
+   style={{
+      background:"#222",
+      padding:"8px 12px",
+      borderRadius:"999px"
+   }}
+   >
+   ♿ Accessible
+   </span>
+
+   </div>
+
+   </div>
+
+   ))}
+
+   </main>
+ );
 }
