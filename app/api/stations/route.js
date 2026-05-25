@@ -1,35 +1,50 @@
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
-
 export async function GET() {
-  try {
-    const { data, error } = await supabase
-      .from("stations")
-      .select("*")
-      .order("score", { ascending: false });
+  const stations = [
+    {
+      name: "Newkirk Av-Little Haiti",
+      line: "Nostrand",
+      borough: "Bk",
+      score: 50,
+      reliability: 6,
+      crowding: 7,
+      accessibility: 4,
+      transfers: 2,
+      delay_score: 8,
+      elevator: false,
+      updated: "Today"
+    },
 
-    if (error) {
-      return Response.json({
-        success: false,
-        error: error.message
-      });
+    {
+      name: "Jefferson St",
+      line: "Canarsie",
+      borough: "Bk",
+      score: 50,
+      reliability: 8,
+      crowding: 5,
+      accessibility: 6,
+      transfers: 3,
+      delay_score: 4,
+      elevator: true,
+      updated: "Today"
+    },
+
+    {
+      name: "Times Sq-42 St",
+      line: "Broadway",
+      borough: "M",
+      score: 92,
+      reliability: 9,
+      crowding: 10,
+      accessibility: 10,
+      transfers: 10,
+      delay_score: 2,
+      elevator: true,
+      updated: "Today"
     }
+  ];
 
-    return Response.json({
-      success: true,
-      count: data ? data.length : 0,
-      stations: data || [],
-      updated: new Date().toISOString()
-    });
-
-  } catch (err) {
-    return Response.json({
-      success: false,
-      error: err.message
-    });
-  }
+  return Response.json({
+    success: true,
+    stations
+  });
 }
