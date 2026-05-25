@@ -1,50 +1,45 @@
 export async function GET() {
-  const stations = [
-    {
-      name: "Newkirk Av-Little Haiti",
-      line: "Nostrand",
-      borough: "Bk",
-      score: 50,
-      reliability: 6,
-      crowding: 7,
-      accessibility: 4,
-      transfers: 2,
-      delay_score: 8,
-      elevator: false,
-      updated: "Today"
-    },
 
-    {
-      name: "Jefferson St",
-      line: "Canarsie",
-      borough: "Bk",
-      score: 50,
-      reliability: 8,
-      crowding: 5,
-      accessibility: 6,
-      transfers: 3,
-      delay_score: 4,
-      elevator: true,
-      updated: "Today"
-    },
+const baseStations = [
 
-    {
-      name: "Times Sq-42 St",
-      line: "Broadway",
-      borough: "M",
-      score: 92,
-      reliability: 9,
-      crowding: 10,
-      accessibility: 10,
-      transfers: 10,
-      delay_score: 2,
-      elevator: true,
-      updated: "Today"
-    }
-  ];
+{name:"Newkirk Av-Little Haiti",line:"Nostrand",borough:"Bk"},
+{name:"Jefferson St",line:"Canarsie",borough:"Bk"},
+{name:"Times Sq-42 St",line:"Broadway",borough:"M"},
 
-  return Response.json({
-    success: true,
-    stations
-  });
+// paste ALL your original stations here
+];
+
+const stations = baseStations.map((station)=>({
+
+...station,
+
+reliability:Math.floor(Math.random()*10)+1,
+crowding:Math.floor(Math.random()*10)+1,
+accessibility:Math.floor(Math.random()*10)+1,
+transfers:Math.floor(Math.random()*10)+1,
+delay_score:Math.floor(Math.random()*10)+1,
+elevator:Math.random()>.5,
+updated:"Today"
+
+})).map(station=>({
+
+...station,
+
+score:
+
+(station.reliability*3)+
+(station.accessibility*2)+
+(station.transfers*2)+
+((10-station.crowding)*2)+
+((10-station.delay_score)*3)
+
+}));
+
+return Response.json({
+
+success:true,
+stations
+
+});
+
 }
