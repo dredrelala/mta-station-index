@@ -4,84 +4,118 @@ import { useEffect, useState } from "react";
 
 export default function Home() {
 
-const [stations,setStations]=useState([]);
-const [search,setSearch]=useState("");
+  const [stations, setStations] = useState([]);
+  const [search, setSearch] = useState("");
 
-useEffect(()=>{
+  useEffect(() => {
 
-async function getStations(){
+    async function getStations() {
 
-const res=await fetch("/api/stations");
-const data=await res.json();
+      try {
 
-if(data.success){
-setStations(data.stations);
-}
+        const res = await fetch("/api/stations");
+        const data = await res.json();
 
-}
+        if (data.success) {
+          setStations(data.stations);
+        }
 
-getStations();
+      } catch (err) {
+        console.log(err);
+      }
+    }
 
-},[]);
+    getStations();
 
-const filtered=stations.filter(station=>
-station.name?.toLowerCase()
-.includes(search.toLowerCase())
-);
+  }, []);
 
-return(
+  const filtered = stations.filter((station) =>
+    station.name
+      ?.toLowerCase()
+      .includes(search.toLowerCase())
+  );
 
-<div style={{
-background:"#0b0f19",
-minHeight:"100vh",
-padding:"40px",
-color:"white"
-}}>
+  return (
 
-<h1>🚇 MTA Station Index V8</h1>
+    <div
+      style={{
+        background: "#0b0f19",
+        minHeight: "100vh",
+        padding: "40px",
+        color: "white"
+      }}
+    >
 
-<input
-placeholder="Search station..."
-value={search}
-onChange={(e)=>setSearch(e.target.value)}
-style={{
-padding:"10px",
-width:"300px",
-borderRadius:"10px",
-marginBottom:"20px"
-}}
-/>
+      <h1
+        style={{
+          fontSize: "50px",
+          marginBottom: "20px"
+        }}
+      >
+        🚇 MTA Station Index V8
+      </h1>
 
-<p>{filtered.length} stations found</p>
+      <input
+        placeholder="Search station..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        style={{
+          padding: "12px",
+          width: "300px",
+          borderRadius: "10px",
+          marginBottom: "20px",
+          border: "none"
+        }}
+      />
 
-{filtered.map((station,index)=>(
+      <p>{filtered.length} stations found</p>
 
-<div
-key={index}
-style={{
-padding:"20px",
-marginBottom:"20px",
-border:"1px solid #333",
-borderRadius:"20px"
-}}
->
+      {filtered.map((station, index) => (
 
-<h2>
-#{index+1} {station.name}
-</h2>
+        <div
+          key={index}
+          style={{
+            padding: "20px",
+            marginBottom: "20px",
+            border: "1px solid #333",
+            borderRadius: "20px",
+            background: "#141b29"
+          }}
+        >
 
-<p>🚉 {station.line}</p>
+          <h2>
+            #{index + 1} {station.name}
+          </h2>
 
-<p>📍 {station.borough}</p>
+          <p>🚉 {station.line}</p>
 
-<p>⭐ {station.score || 50}/100</p>
+          <p>📍 {station.borough}</p>
 
-</div>
+          <p>
+            ⭐ {station.score || 50}/100
+          </p>
 
-))}
+          <p>
+            🟢 Reliability:
+            {station.reliability || 5}/10
+          </p>
 
-</div>
+          <p>
+            👥 Crowding:
+            {station.crowding || 5}/10
+          </p>
 
-)
+          <p>
+            ♿ Accessibility:
+            {station.accessibility || 5}/10
+          </p>
+
+        </div>
+
+      ))}
+
+    </div>
+
+  );
 
 }
